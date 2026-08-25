@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Management System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header>
+        <h1>School Management System</h1>
+        <p>Manage students, teachers and classes</p>
+    </header>
+
+    <main>
+
+        <section class="dashboard">
+            <div class="card">
+                <h2>Students</h2>
+                <p id="studentCount">0</p>
+            </div>
+
+            <div class="card">
+                <h2>Teachers</h2>
+                <p id="teacherCount">0</p>
+            </div>
+
+            <div class="card">
+                <h2>Classes</h2>
+                <p id="classCount">0</p>
+            </div>
+        </section>
+
+        <section>
+    <h2>Students</h2>
+
+    <form id="studentForm">
+        <input type="text" id="studentName" placeholder="Student name" required>
+        <input type="number" id="studentAge" placeholder="Age" required>
+        <input type="text" id="studentClass" placeholder="Class" required>
+
+        <button type="submit">Add Student</button>
+    </form>
+
+    <br>
+
+    <button onclick="loadStudents()">Load Students</button>
+
+    <div id="students"></div>
+</section>
+
+        <section>
+            <h2>Teachers</h2>
+            <button onclick="loadTeachers()">Load Teachers</button>
+            <div id="teachers"></div>
+        </section>
+
+        <section>
+            <h2>Classes</h2>
+            <button onclick="loadClasses()">Load Classes</button>
+            <div id="classes"></div>
+        </section>
+
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
