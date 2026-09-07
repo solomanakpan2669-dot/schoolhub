@@ -15,7 +15,6 @@
 
 <body>
 
-```
 <header class="topbar">
     <div>
         <h1>🏫 MIKEGAB SCHOOL</h1>
@@ -25,251 +24,254 @@
 
 <main class="container">
 
-    <!-- Dashboard Cards -->
-    <section class="dashboard">
+```
+<!-- DASHBOARD -->
+<section class="dashboard">
 
-        <div class="card">
-            <div class="card-icon">👨‍🎓</div>
-            <div>
-                <h2 id="studentCount">0</h2>
-                <p>Students</p>
-            </div>
+    <div class="card">
+        <div class="card-icon">👨‍🎓</div>
+        <div>
+            <h2 id="studentCount">0</h2>
+            <p>Students</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-icon">👨‍🏫</div>
+        <div>
+            <h2 id="teacherCount">0</h2>
+            <p>Teachers</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-icon">🏫</div>
+        <div>
+            <h2 id="classCount">0</h2>
+            <p>Classes</p>
+        </div>
+    </div>
+
+</section>
+
+<!-- NAVIGATION -->
+<nav class="tabs">
+
+    <button
+        class="tab-button active"
+        onclick="showSection('students', this)"
+    >
+        👨‍🎓 Students
+    </button>
+
+    <button
+        class="tab-button"
+        onclick="showSection('teachers', this)"
+    >
+        👨‍🏫 Teachers
+    </button>
+
+    <button
+        class="tab-button"
+        onclick="showSection('classes', this)"
+    >
+        🏫 Classes
+    </button>
+
+</nav>
+
+<!-- =========================
+     STUDENTS
+========================== -->
+
+<section id="students" class="section active">
+
+    <div class="section-header">
+
+        <div>
+            <h2>Students</h2>
+            <p>Add, search and manage students</p>
         </div>
 
-        <div class="card">
-            <div class="card-icon">👨‍🏫</div>
-            <div>
-                <h2 id="teacherCount">0</h2>
-                <p>Teachers</p>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-icon">🏫</div>
-            <div>
-                <h2 id="classCount">0</h2>
-                <p>Classes</p>
-            </div>
-        </div>
-
-    </section>
-
-    <!-- Navigation -->
-    <nav class="tabs">
-
-        <button class="tab-button active" onclick="showSection('students')">
-            👨‍🎓 Students
+        <button
+            class="primary-button"
+            onclick="openModal('studentModal')"
+        >
+            + Add Student
         </button>
 
-        <button class="tab-button" onclick="showSection('teachers')">
-            👨‍🏫 Teachers
+    </div>
+
+    <div class="search-container">
+
+        <input
+            type="search"
+            id="studentSearch"
+            placeholder="🔍 Search students by name or class..."
+            oninput="searchStudents()"
+        >
+
+    </div>
+
+    <div class="table-container">
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Age</th>
+                    <th>Class</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody id="studentsTable">
+
+                <tr>
+                    <td colspan="5">
+                        Loading students...
+                    </td>
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+<!-- =========================
+     TEACHERS
+========================== -->
+
+<section id="teachers" class="section">
+
+    <div class="section-header">
+
+        <div>
+            <h2>Teachers</h2>
+            <p>Add, search and manage teachers</p>
+        </div>
+
+        <button
+            class="primary-button"
+            onclick="openModal('teacherModal')"
+        >
+            + Add Teacher
         </button>
 
-        <button class="tab-button" onclick="showSection('classes')">
-            🏫 Classes
+    </div>
+
+    <div class="search-container">
+
+        <input
+            type="search"
+            id="teacherSearch"
+            placeholder="🔍 Search teachers by name or subject..."
+            oninput="searchTeachers()"
+        >
+
+    </div>
+
+    <div class="table-container">
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Age</th>
+                    <th>Subject</th>
+                    <th>Email</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody id="teachersTable">
+
+                <tr>
+                    <td colspan="6">
+                        Loading teachers...
+                    </td>
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+<!-- =========================
+     CLASSES
+========================== -->
+
+<section id="classes" class="section">
+
+    <div class="section-header">
+
+        <div>
+            <h2>Classes</h2>
+            <p>Add, search and manage classes</p>
+        </div>
+
+        <button
+            class="primary-button"
+            onclick="openModal('classModal')"
+        >
+            + Add Class
         </button>
 
-    </nav>
+    </div>
 
+    <div class="search-container">
 
-    <!-- =========================
-         STUDENTS
-    ========================== -->
+        <input
+            type="search"
+            id="classSearch"
+            placeholder="🔍 Search classes by name, teacher or room..."
+            oninput="searchClasses()"
+        >
 
-    <section id="students" class="section active">
+    </div>
 
-        <div class="section-header">
+    <div class="table-container">
 
-            <div>
-                <h2>Students</h2>
-                <p>Add, search and manage students</p>
-            </div>
+        <table>
 
-            <button
-                class="primary-button"
-                onclick="openModal('studentModal')"
-            >
-                + Add Student
-            </button>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Class Name</th>
+                    <th>Teacher</th>
+                    <th>Room</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
 
-        </div>
+            <tbody id="classesTable">
 
-        <div class="search-container">
+                <tr>
+                    <td colspan="5">
+                        Loading classes...
+                    </td>
+                </tr>
 
-            <input
-                type="search"
-                id="studentSearch"
-                placeholder="🔍 Search students by name or class..."
-                oninput="searchStudents()"
-            >
+            </tbody>
 
-        </div>
+        </table>
 
-        <div class="table-container">
+    </div>
 
-            <table>
-
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Age</th>
-                        <th>Class</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-
-                <tbody id="studentsTable">
-
-                    <tr>
-                        <td colspan="5">
-                            Loading students...
-                        </td>
-                    </tr>
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    </section>
-
-
-    <!-- =========================
-         TEACHERS
-    ========================== -->
-
-    <section id="teachers" class="section">
-
-        <div class="section-header">
-
-            <div>
-                <h2>Teachers</h2>
-                <p>Add, search and manage teachers</p>
-            </div>
-
-            <button
-                class="primary-button"
-                onclick="openModal('teacherModal')"
-            >
-                + Add Teacher
-            </button>
-
-        </div>
-
-        <div class="search-container">
-
-            <input
-                type="search"
-                id="teacherSearch"
-                placeholder="🔍 Search teachers by name or subject..."
-                oninput="searchTeachers()"
-            >
-
-        </div>
-
-        <div class="table-container">
-
-            <table>
-
-                <thead>
-
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Age</th>
-                        <th>Subject</th>
-                        <th>Email</th>
-                        <th>Action</th>
-                    </tr>
-
-                </thead>
-
-                <tbody id="teachersTable">
-
-                    <tr>
-                        <td colspan="6">
-                            Loading teachers...
-                        </td>
-                    </tr>
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    </section>
-
-
-    <!-- =========================
-         CLASSES
-    ========================== -->
-
-    <section id="classes" class="section">
-
-        <div class="section-header">
-
-            <div>
-                <h2>Classes</h2>
-                <p>Add, search and manage classes</p>
-            </div>
-
-            <button
-                class="primary-button"
-                onclick="openModal('classModal')"
-            >
-                + Add Class
-            </button>
-
-        </div>
-
-        <div class="search-container">
-
-            <input
-                type="search"
-                id="classSearch"
-                placeholder="🔍 Search classes by name, teacher or room..."
-                oninput="searchClasses()"
-            >
-
-        </div>
-
-        <div class="table-container">
-
-            <table>
-
-                <thead>
-
-                    <tr>
-                        <th>ID</th>
-                        <th>Class Name</th>
-                        <th>Teacher</th>
-                        <th>Room</th>
-                        <th>Action</th>
-                    </tr>
-
-                </thead>
-
-                <tbody id="classesTable">
-
-                    <tr>
-                        <td colspan="5">
-                            Loading classes...
-                        </td>
-                    </tr>
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    </section>
+</section>
+```
 
 </main>
-
 
 <!-- =========================
      STUDENT MODAL
@@ -277,66 +279,61 @@
 
 <div id="studentModal" class="modal">
 
-    <div class="modal-content">
+```
+<div class="modal-content">
+
+    <button
+        class="close-button"
+        onclick="closeModal('studentModal')"
+    >
+        ×
+    </button>
+
+    <h2 id="studentModalTitle">Add Student</h2>
+
+    <form id="studentForm">
+
+        <label for="studentName">Name</label>
+
+        <input
+            type="text"
+            id="studentName"
+            placeholder="Enter student name"
+            required
+        >
+
+        <label for="studentAge">Age</label>
+
+        <input
+            type="number"
+            id="studentAge"
+            placeholder="Enter age"
+            min="1"
+            required
+        >
+
+        <label for="studentClass">Class</label>
+
+        <input
+            type="text"
+            id="studentClass"
+            placeholder="e.g. SS3"
+            required
+        >
 
         <button
-            class="close-button"
-            onclick="closeModal('studentModal')"
+            type="submit"
+            class="primary-button"
         >
-            ×
+            Add Student
         </button>
 
-        <h2>Add Student</h2>
-
-        <form id="studentForm">
-
-            <label for="studentName">
-                Name
-            </label>
-
-            <input
-                type="text"
-                id="studentName"
-                placeholder="Enter student name"
-                required
-            >
-
-            <label for="studentAge">
-                Age
-            </label>
-
-            <input
-                type="number"
-                id="studentAge"
-                placeholder="Enter age"
-                min="1"
-                required
-            >
-
-            <label for="studentClass">
-                Class
-            </label>
-
-            <input
-                type="text"
-                id="studentClass"
-                placeholder="e.g. SS3"
-                required
-            >
-
-            <button
-                type="submit"
-                class="primary-button"
-            >
-                Add Student
-            </button>
-
-        </form>
-
-    </div>
+    </form>
 
 </div>
+```
 
+</div>
 
 <!-- =========================
      TEACHER MODAL
@@ -344,77 +341,70 @@
 
 <div id="teacherModal" class="modal">
 
-    <div class="modal-content">
+```
+<div class="modal-content">
+
+    <button
+        class="close-button"
+        onclick="closeModal('teacherModal')"
+    >
+        ×
+    </button>
+
+    <h2 id="teacherModalTitle">Add Teacher</h2>
+
+    <form id="teacherForm">
+
+        <label for="teacherName">Name</label>
+
+        <input
+            type="text"
+            id="teacherName"
+            placeholder="Enter teacher name"
+            required
+        >
+
+        <label for="teacherAge">Age</label>
+
+        <input
+            type="number"
+            id="teacherAge"
+            placeholder="Enter age"
+            min="18"
+            required
+        >
+
+        <label for="teacherSubject">Subject</label>
+
+        <input
+            type="text"
+            id="teacherSubject"
+            placeholder="e.g. Mathematics"
+            required
+        >
+
+        <label for="teacherEmail">Email</label>
+
+        <input
+            type="email"
+            id="teacherEmail"
+            placeholder="teacher@example.com"
+            required
+        >
 
         <button
-            class="close-button"
-            onclick="closeModal('teacherModal')"
+            type="submit"
+            class="primary-button"
         >
-            ×
+            Add Teacher
         </button>
 
-        <h2>Add Teacher</h2>
-
-        <form id="teacherForm">
-
-            <label for="teacherName">
-                Name
-            </label>
-
-            <input
-                type="text"
-                id="teacherName"
-                placeholder="Enter teacher name"
-                required
-            >
-
-            <label for="teacherAge">
-                Age
-            </label>
-
-            <input
-                type="number"
-                id="teacherAge"
-                placeholder="Enter age"
-                min="18"
-                required
-            >
-
-            <label for="teacherSubject">
-                Subject
-            </label>
-
-            <input
-                type="text"
-                id="teacherSubject"
-                placeholder="e.g. Mathematics"
-                required
-            >
-
-            <label for="teacherEmail">
-                Email
-            </label>
-
-            <input
-                type="email"
-                id="teacherEmail"
-                placeholder="teacher@example.com"
-                required
-            >
-
-            <button
-                type="submit"
-                class="primary-button"
-            >
-                Add Teacher
-            </button>
-
-        </form>
-
-    </div>
+    </form>
 
 </div>
+```
 
+</div>
 
 <!-- =========================
      CLASS MODAL
@@ -422,68 +412,62 @@
 
 <div id="classModal" class="modal">
 
-    <div class="modal-content">
+```
+<div class="modal-content">
+
+    <button
+        class="close-button"
+        onclick="closeModal('classModal')"
+    >
+        ×
+    </button>
+
+    <h2 id="classModalTitle">Add Class</h2>
+
+    <form id="classForm">
+
+        <label for="className">Class Name</label>
+
+        <input
+            type="text"
+            id="className"
+            placeholder="e.g. SS3"
+            required
+        >
+
+        <label for="classTeacher">Teacher</label>
+
+        <input
+            type="text"
+            id="classTeacher"
+            placeholder="Enter teacher name"
+            required
+        >
+
+        <label for="classRoom">Room</label>
+
+        <input
+            type="text"
+            id="classRoom"
+            placeholder="e.g. Room 3"
+            required
+        >
 
         <button
-            class="close-button"
-            onclick="closeModal('classModal')"
+            type="submit"
+            class="primary-button"
         >
-            ×
+            Add Class
         </button>
 
-        <h2>Add Class</h2>
+    </form>
 
-        <form id="classForm">
-
-            <label for="className">
-                Class Name
-            </label>
-
-            <input
-                type="text"
-                id="className"
-                placeholder="e.g. SS3"
-                required
-            >
-
-            <label for="classTeacher">
-                Teacher
-            </label>
-
-            <input
-                type="text"
-                id="classTeacher"
-                placeholder="Enter teacher name"
-                required
-            >
-
-            <label for="classRoom">
-                Room
-            </label>
-
-            <input
-                type="text"
-                id="classRoom"
-                placeholder="e.g. Room 3"
-                required
-            >
-
-            <button
-                type="submit"
-                class="primary-button"
-            >
-                Add Class
-            </button>
-
-        </form>
-
-    </div>
+</div>
+```
 
 </div>
 
-
 <script src="script.js"></script>
-```
 
 </body>
 </html>

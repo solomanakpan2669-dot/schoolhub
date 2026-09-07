@@ -40,7 +40,7 @@ function showMessage(message) {
 }
 
 // ======================================================
-// DASHBOARD COUNTERS
+// DASHBOARD
 // ======================================================
 
 function updateDashboardCounts() {
@@ -75,7 +75,6 @@ async function loadStudents() {
 
         displayStudents(allStudents);
         updateDashboardCounts();
-
     } catch (error) {
         console.error("Error loading students:", error);
 
@@ -164,7 +163,7 @@ async function saveStudent(event) {
             className
         };
 
-        if (editingStudentId) {
+        if (editingStudentId !== null) {
             await getJSON(
                 `${API_URL}/students/${editingStudentId}`,
                 {
@@ -177,7 +176,6 @@ async function saveStudent(event) {
             );
 
             showMessage("Student updated successfully.");
-
         } else {
             await getJSON(
                 `${API_URL}/students`,
@@ -197,13 +195,10 @@ async function saveStudent(event) {
 
         closeModal("studentModal");
 
-        getElement("studentForm")?.reset();
-
         await loadStudents();
 
     } catch (error) {
         console.error("Error saving student:", error);
-
         showMessage("Could not save student.");
     }
 }
@@ -220,6 +215,7 @@ function editStudent(id) {
     const nameInput = getElement("studentName");
     const ageInput = getElement("studentAge");
     const classInput = getElement("studentClass");
+    const title = getElement("studentModalTitle");
 
     if (nameInput) {
         nameInput.value = student.name;
@@ -231,6 +227,10 @@ function editStudent(id) {
 
     if (classInput) {
         classInput.value = student.className;
+    }
+
+    if (title) {
+        title.textContent = "Edit Student";
     }
 
     openModal("studentModal");
@@ -261,7 +261,6 @@ async function deleteStudent(id) {
 
     } catch (error) {
         console.error("Error deleting student:", error);
-
         showMessage("Could not delete student.");
     }
 }
@@ -376,7 +375,7 @@ async function saveTeacher(event) {
             email
         };
 
-        if (editingTeacherId) {
+        if (editingTeacherId !== null) {
             await getJSON(
                 `${API_URL}/teachers/${editingTeacherId}`,
                 {
@@ -409,13 +408,10 @@ async function saveTeacher(event) {
 
         closeModal("teacherModal");
 
-        getElement("teacherForm")?.reset();
-
         await loadTeachers();
 
     } catch (error) {
         console.error("Error saving teacher:", error);
-
         showMessage("Could not save teacher.");
     }
 }
@@ -433,6 +429,7 @@ function editTeacher(id) {
     const ageInput = getElement("teacherAge");
     const subjectInput = getElement("teacherSubject");
     const emailInput = getElement("teacherEmail");
+    const title = getElement("teacherModalTitle");
 
     if (nameInput) {
         nameInput.value = teacher.name;
@@ -448,6 +445,10 @@ function editTeacher(id) {
 
     if (emailInput) {
         emailInput.value = teacher.email;
+    }
+
+    if (title) {
+        title.textContent = "Edit Teacher";
     }
 
     openModal("teacherModal");
@@ -478,7 +479,6 @@ async function deleteTeacher(id) {
 
     } catch (error) {
         console.error("Error deleting teacher:", error);
-
         showMessage("Could not delete teacher.");
     }
 }
@@ -521,49 +521,45 @@ function displayClasses(classes) {
         return;
     }
 
-    table.innerHTML = classes.map(classItem => `
-        <tr>
-            <td>${escapeHTML(classItem.id)}</td>
+    table.innerHTML = classes.map(classItem => {
 
-            <td>
-                ${escapeHTML(
-                    classItem.name ||
-                    classItem.className ||
-                    ""
-                )}
-            </td>
+        const className =
+            classItem.name ||
+            classItem.className ||
+            "";
 
-            <td>
-                ${escapeHTML(
-                    classItem.teacher ||
-                    classItem.classTeacher ||
-                    ""
-                )}
-            </td>
+        const teacher =
+            classItem.teacher ||
+            classItem.classTeacher ||
+            "";
 
-            <td>
-                ${escapeHTML(
-                    classItem.room ||
-                    classItem.classRoom ||
-                    ""
-                )}
-            </td>
+        const room =
+            classItem.room ||
+            classItem.classRoom ||
+            "";
 
-            <td>
-                <button onclick="viewClass(${classItem.id})">
-                    View
-                </button>
+        return `
+            <tr>
+                <td>${escapeHTML(classItem.id)}</td>
+                <td>${escapeHTML(className)}</td>
+                <td>${escapeHTML(teacher)}</td>
+                <td>${escapeHTML(room)}</td>
+                <td>
+                    <button onclick="viewClass(${classItem.id})">
+                        View
+                    </button>
 
-                <button onclick="editClass(${classItem.id})">
-                    Edit
-                </button>
+                    <button onclick="editClass(${classItem.id})">
+                        Edit
+                    </button>
 
-                <button onclick="deleteClass(${classItem.id})">
-                    Delete
-                </button>
-            </td>
-        </tr>
-    `).join("");
+                    <button onclick="deleteClass(${classItem.id})">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join("");
 }
 
 function searchClasses() {
@@ -573,15 +569,41 @@ function searchClasses() {
 
     const search = input.value.toLowerCase().trim();
 
-    const filtered = allClasses.filter(classItem =>
-        String(
+    const filtered = allClasses.filter(classItem => {
+
+        const name =
             classItem.name ||
             classItem.className ||
-            ""
-        )
-        .toLowerCase()
-        .includes(search)
-    );
+            "";
+
+        const teacher =
+            classItem.teacher ||
+            classItem.classTeacher ||
+            "";
+
+        const room =
+            classItem.room ||
+            classItem.classRoom ||
+            "";
+
+        const id = String(classItem.id || "");
+
+        return (
+            String(name)
+                .toLowerCase()
+                .includes(search) ||
+
+            String(teacher)
+                .toLowerCase()
+                .includes(search) ||
+
+            String(room)
+                .toLowerCase()
+                .includes(search) ||
+
+            id.includes(search)
+        );
+    });
 
     displayClasses(filtered);
 }
@@ -605,7 +627,7 @@ async function saveClass(event) {
             room
         };
 
-        if (editingClassId) {
+        if (editingClassId !== null) {
             await getJSON(
                 `${API_URL}/classes/${editingClassId}`,
                 {
@@ -638,13 +660,10 @@ async function saveClass(event) {
 
         closeModal("classModal");
 
-        getElement("classForm")?.reset();
-
         await loadClasses();
 
     } catch (error) {
         console.error("Error saving class:", error);
-
         showMessage("Could not save class.");
     }
 }
@@ -661,6 +680,7 @@ function editClass(id) {
     const nameInput = getElement("className");
     const teacherInput = getElement("classTeacher");
     const roomInput = getElement("classRoom");
+    const title = getElement("classModalTitle");
 
     if (nameInput) {
         nameInput.value =
@@ -681,6 +701,10 @@ function editClass(id) {
             classItem.room ||
             classItem.classRoom ||
             "";
+    }
+
+    if (title) {
+        title.textContent = "Edit Class";
     }
 
     openModal("classModal");
@@ -705,13 +729,12 @@ async function deleteClass(id) {
 
     } catch (error) {
         console.error("Error deleting class:", error);
-
         showMessage("Could not delete class.");
     }
 }
 
 // ======================================================
-// STUDENT DETAILS
+// VIEW DETAILS
 // ======================================================
 
 function viewStudent(id) {
@@ -730,10 +753,6 @@ function viewStudent(id) {
     );
 }
 
-// ======================================================
-// TEACHER DETAILS
-// ======================================================
-
 function viewTeacher(id) {
     const teacher = allTeachers.find(
         item => Number(item.id) === Number(id)
@@ -750,10 +769,6 @@ function viewTeacher(id) {
         `Email: ${teacher.email}`
     );
 }
-
-// ======================================================
-// CLASS DETAILS
-// ======================================================
 
 function viewClass(id) {
     const classItem = allClasses.find(
@@ -790,9 +805,9 @@ function viewClass(id) {
 function openModal(id) {
     const modal = getElement(id);
 
-    if (modal) {
-        modal.style.display = "flex";
-    }
+    if (!modal) return;
+
+    modal.style.display = "flex";
 }
 
 function closeModal(id) {
@@ -804,17 +819,38 @@ function closeModal(id) {
 
     if (id === "studentModal") {
         editingStudentId = null;
+
         getElement("studentForm")?.reset();
+
+        const title = getElement("studentModalTitle");
+
+        if (title) {
+            title.textContent = "Add Student";
+        }
     }
 
     if (id === "teacherModal") {
         editingTeacherId = null;
+
         getElement("teacherForm")?.reset();
+
+        const title = getElement("teacherModalTitle");
+
+        if (title) {
+            title.textContent = "Add Teacher";
+        }
     }
 
     if (id === "classModal") {
         editingClassId = null;
+
         getElement("classForm")?.reset();
+
+        const title = getElement("classModalTitle");
+
+        if (title) {
+            title.textContent = "Add Class";
+        }
     }
 }
 
@@ -822,20 +858,27 @@ function closeModal(id) {
 // TABS / SECTIONS
 // ======================================================
 
-function showSection(sectionName) {
+function showSection(sectionName, clickedButton = null) {
+
     document.querySelectorAll(".section").forEach(section => {
         section.style.display = "none";
+        section.classList.remove("active");
     });
 
     const section = getElement(sectionName);
 
     if (section) {
         section.style.display = "block";
+        section.classList.add("active");
     }
 
-    document.querySelectorAll(".tab").forEach(tab => {
-        tab.classList.remove("active");
+    document.querySelectorAll(".tab-button").forEach(button => {
+        button.classList.remove("active");
     });
+
+    if (clickedButton) {
+        clickedButton.classList.add("active");
+    }
 }
 
 // ======================================================
@@ -871,7 +914,10 @@ function setupClassForm() {
 // ======================================================
 
 async function setupApplication() {
-    console.log("Starting School Management System...");
+
+    console.log(
+        "Starting MIKEGAB SCHOOL Management System..."
+    );
 
     setupStudentForm();
     setupTeacherForm();
@@ -886,12 +932,12 @@ async function setupApplication() {
     updateDashboardCounts();
 
     console.log(
-        "School Management System started successfully."
+        "MIKEGAB SCHOOL Management System started successfully."
     );
 }
 
 // ======================================================
-// START WHEN PAGE LOADS
+// PAGE LOAD
 // ======================================================
 
 document.addEventListener(
