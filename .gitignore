@@ -1,2 +1,4 @@
 node_modules/
 database/school.db
+*.db
+.env
