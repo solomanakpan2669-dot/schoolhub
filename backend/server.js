@@ -1,25 +1,27 @@
 const express = require("express");
 const cors = require("cors");
-const db = require("./database/database");
+const path = require("path");
+
 const app = express();
-app.use(cors());
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 const studentsRouter = require("./routes/students");
 const teachersRouter = require("./routes/teachers");
 const classesRouter = require("./routes/classes");
-// This must come before the routes
+
+app.use(cors());
 app.use(express.json());
 
 app.use("/api/students", studentsRouter);
 app.use("/api/teachers", teachersRouter);
 app.use("/api/classes", classesRouter);
+
+app.use(express.static(path.join(__dirname, "../frontend")));
+
 app.get("/", (req, res) => {
-    res.json({
-        message: "School Management System API is running!"
-    });
+    res.sendFile(path.join(__dirname, "../frontend/index.html"));
 });
 
 app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
