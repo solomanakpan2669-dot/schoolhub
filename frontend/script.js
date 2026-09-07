@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3000/api";
+const API_URL = "https://schoolcentral.onrender.com/api";
 
 let allStudents = [];
 let allTeachers = [];
@@ -7,7 +7,6 @@ let allClasses = [];
 let editingStudentId = null;
 let editingTeacherId = null;
 let editingClassId = null;
-
 
 // ======================================================
 // HELPERS
@@ -40,7 +39,6 @@ function showMessage(message) {
     alert(message);
 }
 
-
 // ======================================================
 // DASHBOARD COUNTERS
 // ======================================================
@@ -63,7 +61,6 @@ function updateDashboardCounts() {
     }
 }
 
-
 // ======================================================
 // STUDENTS
 // ======================================================
@@ -77,12 +74,11 @@ async function loadStudents() {
             : data.students || [];
 
         displayStudents(allStudents);
-
-        // Update total immediately after loading
         updateDashboardCounts();
 
     } catch (error) {
         console.error("Error loading students:", error);
+
         allStudents = [];
         displayStudents([]);
         updateDashboardCounts();
@@ -134,9 +130,16 @@ function searchStudents() {
     const search = input.value.toLowerCase().trim();
 
     const filtered = allStudents.filter(student =>
-        String(student.name).toLowerCase().includes(search) ||
-        String(student.className).toLowerCase().includes(search) ||
-        String(student.id).includes(search)
+        String(student.name)
+            .toLowerCase()
+            .includes(search) ||
+
+        String(student.className)
+            .toLowerCase()
+            .includes(search) ||
+
+        String(student.id)
+            .includes(search)
     );
 
     displayStudents(filtered);
@@ -174,6 +177,7 @@ async function saveStudent(event) {
             );
 
             showMessage("Student updated successfully.");
+
         } else {
             await getJSON(
                 `${API_URL}/students`,
@@ -195,11 +199,11 @@ async function saveStudent(event) {
 
         getElement("studentForm")?.reset();
 
-        // Reload students so the total number updates
         await loadStudents();
 
     } catch (error) {
         console.error("Error saving student:", error);
+
         showMessage("Could not save student.");
     }
 }
@@ -213,9 +217,21 @@ function editStudent(id) {
 
     editingStudentId = student.id;
 
-    getElement("studentName").value = student.name;
-    getElement("studentAge").value = student.age;
-    getElement("studentClass").value = student.className;
+    const nameInput = getElement("studentName");
+    const ageInput = getElement("studentAge");
+    const classInput = getElement("studentClass");
+
+    if (nameInput) {
+        nameInput.value = student.name;
+    }
+
+    if (ageInput) {
+        ageInput.value = student.age;
+    }
+
+    if (classInput) {
+        classInput.value = student.className;
+    }
 
     openModal("studentModal");
 }
@@ -239,17 +255,16 @@ async function deleteStudent(id) {
             }
         );
 
-        // Reload so the counter decreases
         await loadStudents();
 
         showMessage("Student deleted successfully.");
 
     } catch (error) {
         console.error("Error deleting student:", error);
+
         showMessage("Could not delete student.");
     }
 }
-
 
 // ======================================================
 // TEACHERS
@@ -264,12 +279,11 @@ async function loadTeachers() {
             : data.teachers || [];
 
         displayTeachers(allTeachers);
-
-        // Update total immediately after loading
         updateDashboardCounts();
 
     } catch (error) {
         console.error("Error loading teachers:", error);
+
         allTeachers = [];
         displayTeachers([]);
         updateDashboardCounts();
@@ -322,10 +336,20 @@ function searchTeachers() {
     const search = input.value.toLowerCase().trim();
 
     const filtered = allTeachers.filter(teacher =>
-        String(teacher.name).toLowerCase().includes(search) ||
-        String(teacher.subject).toLowerCase().includes(search) ||
-        String(teacher.email).toLowerCase().includes(search) ||
-        String(teacher.id).includes(search)
+        String(teacher.name)
+            .toLowerCase()
+            .includes(search) ||
+
+        String(teacher.subject)
+            .toLowerCase()
+            .includes(search) ||
+
+        String(teacher.email)
+            .toLowerCase()
+            .includes(search) ||
+
+        String(teacher.id)
+            .includes(search)
     );
 
     displayTeachers(filtered);
@@ -365,6 +389,7 @@ async function saveTeacher(event) {
             );
 
             showMessage("Teacher updated successfully.");
+
         } else {
             await getJSON(
                 `${API_URL}/teachers`,
@@ -386,11 +411,11 @@ async function saveTeacher(event) {
 
         getElement("teacherForm")?.reset();
 
-        // Reload so the total number updates
         await loadTeachers();
 
     } catch (error) {
         console.error("Error saving teacher:", error);
+
         showMessage("Could not save teacher.");
     }
 }
@@ -404,10 +429,26 @@ function editTeacher(id) {
 
     editingTeacherId = teacher.id;
 
-    getElement("teacherName").value = teacher.name;
-    getElement("teacherAge").value = teacher.age;
-    getElement("teacherSubject").value = teacher.subject;
-    getElement("teacherEmail").value = teacher.email;
+    const nameInput = getElement("teacherName");
+    const ageInput = getElement("teacherAge");
+    const subjectInput = getElement("teacherSubject");
+    const emailInput = getElement("teacherEmail");
+
+    if (nameInput) {
+        nameInput.value = teacher.name;
+    }
+
+    if (ageInput) {
+        ageInput.value = teacher.age;
+    }
+
+    if (subjectInput) {
+        subjectInput.value = teacher.subject;
+    }
+
+    if (emailInput) {
+        emailInput.value = teacher.email;
+    }
 
     openModal("teacherModal");
 }
@@ -431,17 +472,16 @@ async function deleteTeacher(id) {
             }
         );
 
-        // Reload so the counter decreases
         await loadTeachers();
 
         showMessage("Teacher deleted successfully.");
 
     } catch (error) {
         console.error("Error deleting teacher:", error);
+
         showMessage("Could not delete teacher.");
     }
 }
-
 
 // ======================================================
 // CLASSES
@@ -456,11 +496,11 @@ async function loadClasses() {
             : data.classes || [];
 
         displayClasses(allClasses);
-
         updateDashboardCounts();
 
     } catch (error) {
         console.error("Error loading classes:", error);
+
         allClasses = [];
         displayClasses([]);
         updateDashboardCounts();
@@ -484,9 +524,31 @@ function displayClasses(classes) {
     table.innerHTML = classes.map(classItem => `
         <tr>
             <td>${escapeHTML(classItem.id)}</td>
-            <td>${escapeHTML(classItem.name || classItem.className)}</td>
-            <td>${escapeHTML(classItem.teacher || classItem.classTeacher || "")}</td>
-            <td>${escapeHTML(classItem.room || classItem.classRoom || "")}</td>
+
+            <td>
+                ${escapeHTML(
+                    classItem.name ||
+                    classItem.className ||
+                    ""
+                )}
+            </td>
+
+            <td>
+                ${escapeHTML(
+                    classItem.teacher ||
+                    classItem.classTeacher ||
+                    ""
+                )}
+            </td>
+
+            <td>
+                ${escapeHTML(
+                    classItem.room ||
+                    classItem.classRoom ||
+                    ""
+                )}
+            </td>
+
             <td>
                 <button onclick="viewClass(${classItem.id})">
                     View
@@ -512,9 +574,13 @@ function searchClasses() {
     const search = input.value.toLowerCase().trim();
 
     const filtered = allClasses.filter(classItem =>
-        String(classItem.name || classItem.className)
-            .toLowerCase()
-            .includes(search)
+        String(
+            classItem.name ||
+            classItem.className ||
+            ""
+        )
+        .toLowerCase()
+        .includes(search)
     );
 
     displayClasses(filtered);
@@ -552,6 +618,7 @@ async function saveClass(event) {
             );
 
             showMessage("Class updated successfully.");
+
         } else {
             await getJSON(
                 `${API_URL}/classes`,
@@ -577,6 +644,7 @@ async function saveClass(event) {
 
     } catch (error) {
         console.error("Error saving class:", error);
+
         showMessage("Could not save class.");
     }
 }
@@ -590,14 +658,30 @@ function editClass(id) {
 
     editingClassId = classItem.id;
 
-    getElement("className").value =
-        classItem.name || classItem.className || "";
+    const nameInput = getElement("className");
+    const teacherInput = getElement("classTeacher");
+    const roomInput = getElement("classRoom");
 
-    getElement("classTeacher").value =
-        classItem.teacher || classItem.classTeacher || "";
+    if (nameInput) {
+        nameInput.value =
+            classItem.name ||
+            classItem.className ||
+            "";
+    }
 
-    getElement("classRoom").value =
-        classItem.room || classItem.classRoom || "";
+    if (teacherInput) {
+        teacherInput.value =
+            classItem.teacher ||
+            classItem.classTeacher ||
+            "";
+    }
+
+    if (roomInput) {
+        roomInput.value =
+            classItem.room ||
+            classItem.classRoom ||
+            "";
+    }
 
     openModal("classModal");
 }
@@ -621,10 +705,10 @@ async function deleteClass(id) {
 
     } catch (error) {
         console.error("Error deleting class:", error);
+
         showMessage("Could not delete class.");
     }
 }
-
 
 // ======================================================
 // STUDENT DETAILS
@@ -645,7 +729,6 @@ function viewStudent(id) {
         `Class: ${student.className}`
     );
 }
-
 
 // ======================================================
 // TEACHER DETAILS
@@ -668,7 +751,6 @@ function viewTeacher(id) {
     );
 }
 
-
 // ======================================================
 // CLASS DETAILS
 // ======================================================
@@ -683,12 +765,23 @@ function viewClass(id) {
     alert(
         `Class Details\n\n` +
         `ID: ${classItem.id}\n` +
-        `Class: ${classItem.name || classItem.className || ""}\n` +
-        `Teacher: ${classItem.teacher || classItem.classTeacher || ""}\n` +
-        `Room: ${classItem.room || classItem.classRoom || ""}`
+        `Class: ${
+            classItem.name ||
+            classItem.className ||
+            ""
+        }\n` +
+        `Teacher: ${
+            classItem.teacher ||
+            classItem.classTeacher ||
+            ""
+        }\n` +
+        `Room: ${
+            classItem.room ||
+            classItem.classRoom ||
+            ""
+        }`
     );
 }
-
 
 // ======================================================
 // MODALS
@@ -725,9 +818,8 @@ function closeModal(id) {
     }
 }
 
-
 // ======================================================
-// TABS
+// TABS / SECTIONS
 // ======================================================
 
 function showSection(sectionName) {
@@ -745,7 +837,6 @@ function showSection(sectionName) {
         tab.classList.remove("active");
     });
 }
-
 
 // ======================================================
 // FORMS
@@ -775,7 +866,6 @@ function setupClassForm() {
     form.addEventListener("submit", saveClass);
 }
 
-
 // ======================================================
 // START APPLICATION
 // ======================================================
@@ -787,28 +877,27 @@ async function setupApplication() {
     setupTeacherForm();
     setupClassForm();
 
-    // Load all records when the page opens
     await Promise.all([
         loadStudents(),
         loadTeachers(),
         loadClasses()
     ]);
 
-    // Final counter update
     updateDashboardCounts();
 
-    console.log("School Management System started successfully.");
+    console.log(
+        "School Management System started successfully."
+    );
 }
-
 
 // ======================================================
 // START WHEN PAGE LOADS
 // ======================================================
 
-document.addEventListener("DOMContentLoaded", () => {
-    setupApplication();
-});
-
+document.addEventListener(
+    "DOMContentLoaded",
+    setupApplication
+);
 
 // ======================================================
 // MAKE FUNCTIONS AVAILABLE TO HTML
@@ -840,4 +929,5 @@ window.searchClasses = searchClasses;
 
 window.openModal = openModal;
 window.closeModal = closeModal;
+
 window.showSection = showSection;
