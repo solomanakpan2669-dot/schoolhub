@@ -3,23 +3,38 @@ const db = require("../database/database");
 
 const router = express.Router();
 
-/* =========================================================
-   GET ALL TEACHERS
-========================================================= */
+function getSchoolId(req, res) {
+    const schoolId = req.schoolId;
 
+    if (!schoolId) {
+        res.status(401).json({
+            error: "School login required"
+        });
+        return null;
+    }
+
+    return schoolId;
+}
+
+// GET ALL TEACHERS FOR LOGGED-IN SCHOOL
 router.get("/", (req, res) => {
     try {
+        const schoolId = getSchoolId(req, res);
+        if (!schoolId) return;
+
         const teachers = db
-            .prepare("SELECT * FROM teachers")
-            .all();
+            .prepare(`
+                SELECT id, name, age, subject, email
+                FROM teachers
+                WHERE schoolId = ?
+                ORDER BY id DESC
+            `)
+            .all(schoolId);
 
         res.json(teachers);
 
     } catch (error) {
-        console.error(
-            "GET TEACHERS ERROR:",
-            error
-        );
+        console.error("GET TEACHERS ERROR:", error);
 
         res.status(500).json({
             error: "Failed to get teachers"
@@ -27,17 +42,19 @@ router.get("/", (req, res) => {
     }
 });
 
-/* =========================================================
-   GET ONE TEACHER
-========================================================= */
-
+// GET ONE TEACHER
 router.get("/:id", (req, res) => {
     try {
+        const schoolId = getSchoolId(req, res);
+        if (!schoolId) return;
+
         const teacher = db
-            .prepare(
-                "SELECT * FROM teachers WHERE id = ?"
-            )
-            .get(req.params.id);
+            .prepare(`
+                SELECT id, name, age, subject, email
+                FROM teachers
+                WHERE id = ? AND schoolId = ?
+            `)
+            .get(req.params.id, schoolId);
 
         if (!teacher) {
             return res.status(404).json({
@@ -48,10 +65,7 @@ router.get("/:id", (req, res) => {
         res.json(teacher);
 
     } catch (error) {
-        console.error(
-            "GET TEACHER ERROR:",
-            error
-        );
+        console.error("GET TEACHER ERROR:", error);
 
         res.status(500).json({
             error: "Failed to get teacher"
@@ -59,12 +73,12 @@ router.get("/:id", (req, res) => {
     }
 });
 
-/* =========================================================
-   ADD TEACHER
-========================================================= */
-
+// ADD TEACHER
 router.post("/", (req, res) => {
     try {
+        const schoolId = getSchoolId(req, res);
+        if (!schoolId) return;
+
         const body = req.body || {};
 
         const name = body.name;
@@ -72,25 +86,20 @@ router.post("/", (req, res) => {
         const subject = body.subject;
         const email = body.email;
 
-        if (
-            !name ||
-            !age ||
-            !subject ||
-            !email
-        ) {
+        if (!name || !age || !subject || !email) {
             return res.status(400).json({
-                error:
-                    "Name, age, subject and email are required"
+                error: "Name, age, subject and email are required"
             });
         }
 
         const result = db
             .prepare(`
                 INSERT INTO teachers
-                (name, age, subject, email)
-                VALUES (?, ?, ?, ?)
+                (schoolId, name, age, subject, email)
+                VALUES (?, ?, ?, ?, ?)
             `)
             .run(
+                schoolId,
                 name,
                 age,
                 subject,
@@ -98,29 +107,20 @@ router.post("/", (req, res) => {
             );
 
         const teacher = db
-            .prepare(
-                "SELECT * FROM teachers WHERE id = ?"
-            )
-            .get(result.lastInsertRowid);
+            .prepare(`
+                SELECT id, name, age, subject, email
+                FROM teachers
+                WHERE id = ? AND schoolId = ?
+            `)
+            .get(
+                result.lastInsertRowid,
+                schoolId
+            );
 
         res.status(201).json(teacher);
 
     } catch (error) {
-        console.error(
-            "ADD TEACHER ERROR:",
-            error
-        );
-
-        if (
-            error.message.includes(
-                "UNIQUE constraint failed"
-            )
-        ) {
-            return res.status(409).json({
-                error:
-                    "A teacher with this email already exists"
-            });
-        }
+        console.error("ADD TEACHER ERROR:", error);
 
         res.status(500).json({
             error: "Failed to add teacher",
@@ -129,14 +129,13 @@ router.post("/", (req, res) => {
     }
 });
 
-/* =========================================================
-   EDIT TEACHER
-========================================================= */
-
+// UPDATE TEACHER
 router.put("/:id", (req, res) => {
     try {
-        const id = req.params.id;
+        const schoolId = getSchoolId(req, res);
+        if (!schoolId) return;
 
+        const id = req.params.id;
         const body = req.body || {};
 
         const name = body.name;
@@ -144,23 +143,19 @@ router.put("/:id", (req, res) => {
         const subject = body.subject;
         const email = body.email;
 
-        if (
-            !name ||
-            !age ||
-            !subject ||
-            !email
-        ) {
+        if (!name || !age || !subject || !email) {
             return res.status(400).json({
-                error:
-                    "Name, age, subject and email are required"
+                error: "Name, age, subject and email are required"
             });
         }
 
         const existingTeacher = db
-            .prepare(
-                "SELECT * FROM teachers WHERE id = ?"
-            )
-            .get(id);
+            .prepare(`
+                SELECT id
+                FROM teachers
+                WHERE id = ? AND schoolId = ?
+            `)
+            .get(id, schoolId);
 
         if (!existingTeacher) {
             return res.status(404).json({
@@ -169,15 +164,22 @@ router.put("/:id", (req, res) => {
         }
 
         const emailOwner = db
-            .prepare(
-                "SELECT * FROM teachers WHERE email = ? AND id != ?"
-            )
-            .get(email, id);
+            .prepare(`
+                SELECT id
+                FROM teachers
+                WHERE email = ?
+                AND schoolId = ?
+                AND id != ?
+            `)
+            .get(
+                email,
+                schoolId,
+                id
+            );
 
         if (emailOwner) {
             return res.status(409).json({
-                error:
-                    "A teacher with this email already exists"
+                error: "A teacher with this email already exists"
             });
         }
 
@@ -188,27 +190,28 @@ router.put("/:id", (req, res) => {
                 subject = ?,
                 email = ?
             WHERE id = ?
+            AND schoolId = ?
         `).run(
             name,
             age,
             subject,
             email,
-            id
+            id,
+            schoolId
         );
 
         const updatedTeacher = db
-            .prepare(
-                "SELECT * FROM teachers WHERE id = ?"
-            )
-            .get(id);
+            .prepare(`
+                SELECT id, name, age, subject, email
+                FROM teachers
+                WHERE id = ? AND schoolId = ?
+            `)
+            .get(id, schoolId);
 
         res.json(updatedTeacher);
 
     } catch (error) {
-        console.error(
-            "EDIT TEACHER ERROR:",
-            error
-        );
+        console.error("UPDATE TEACHER ERROR:", error);
 
         res.status(500).json({
             error: "Failed to update teacher",
@@ -217,17 +220,21 @@ router.put("/:id", (req, res) => {
     }
 });
 
-/* =========================================================
-   DELETE TEACHER
-========================================================= */
-
+// DELETE TEACHER
 router.delete("/:id", (req, res) => {
     try {
+        const schoolId = getSchoolId(req, res);
+        if (!schoolId) return;
+
         const result = db
-            .prepare(
-                "DELETE FROM teachers WHERE id = ?"
-            )
-            .run(req.params.id);
+            .prepare(`
+                DELETE FROM teachers
+                WHERE id = ? AND schoolId = ?
+            `)
+            .run(
+                req.params.id,
+                schoolId
+            );
 
         if (result.changes === 0) {
             return res.status(404).json({
@@ -236,15 +243,11 @@ router.delete("/:id", (req, res) => {
         }
 
         res.json({
-            message:
-                "Teacher deleted successfully"
+            message: "Teacher deleted successfully"
         });
 
     } catch (error) {
-        console.error(
-            "DELETE TEACHER ERROR:",
-            error
-        );
+        console.error("DELETE TEACHER ERROR:", error);
 
         res.status(500).json({
             error: "Failed to delete teacher"

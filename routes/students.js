@@ -3,16 +3,36 @@ const db = require("../database/database");
 
 const router = express.Router();
 
+function getSchoolId(req, res) {
+    const schoolId = req.schoolId;
 
-// ===============================
+    if (!schoolId) {
+        res.status(401).json({
+            error: "School login required"
+        });
+        return null;
+    }
+
+    return schoolId;
+}
+
+// ============================================================
 // GET ALL STUDENTS
-// ===============================
+// ============================================================
 
 router.get("/", (req, res) => {
     try {
+        const schoolId = getSchoolId(req, res);
+        if (!schoolId) return;
+
         const students = db
-            .prepare("SELECT * FROM students")
-            .all();
+            .prepare(`
+                SELECT id, name, age, className, photo
+                FROM students
+                WHERE schoolId = ?
+                ORDER BY id DESC
+            `)
+            .all(schoolId);
 
         res.json(students);
 
@@ -25,16 +45,22 @@ router.get("/", (req, res) => {
     }
 });
 
-
-// ===============================
+// ============================================================
 // GET ONE STUDENT
-// ===============================
+// ============================================================
 
 router.get("/:id", (req, res) => {
     try {
+        const schoolId = getSchoolId(req, res);
+        if (!schoolId) return;
+
         const student = db
-            .prepare("SELECT * FROM students WHERE id = ?")
-            .get(req.params.id);
+            .prepare(`
+                SELECT id, name, age, className, photo
+                FROM students
+                WHERE id = ? AND schoolId = ?
+            `)
+            .get(req.params.id, schoolId);
 
         if (!student) {
             return res.status(404).json({
@@ -53,13 +79,15 @@ router.get("/:id", (req, res) => {
     }
 });
 
-
-// ===============================
+// ============================================================
 // ADD STUDENT
-// ===============================
+// ============================================================
 
 router.post("/", (req, res) => {
     try {
+        const schoolId = getSchoolId(req, res);
+        if (!schoolId) return;
+
         const body = req.body || {};
 
         const name = body.name;
@@ -74,14 +102,27 @@ router.post("/", (req, res) => {
 
         const result = db
             .prepare(`
-                INSERT INTO students (name, age, className)
-                VALUES (?, ?, ?)
+                INSERT INTO students
+                (schoolId, name, age, className)
+                VALUES (?, ?, ?, ?)
             `)
-            .run(name, age, className);
+            .run(
+                schoolId,
+                name,
+                age,
+                className
+            );
 
         const student = db
-            .prepare("SELECT * FROM students WHERE id = ?")
-            .get(result.lastInsertRowid);
+            .prepare(`
+                SELECT id, name, age, className, photo
+                FROM students
+                WHERE id = ? AND schoolId = ?
+            `)
+            .get(
+                result.lastInsertRowid,
+                schoolId
+            );
 
         res.status(201).json(student);
 
@@ -95,13 +136,15 @@ router.post("/", (req, res) => {
     }
 });
 
-
-// ===============================
+// ============================================================
 // UPDATE STUDENT
-// ===============================
+// ============================================================
 
 router.put("/:id", (req, res) => {
     try {
+        const schoolId = getSchoolId(req, res);
+        if (!schoolId) return;
+
         const body = req.body || {};
 
         const name = body.name;
@@ -115,8 +158,15 @@ router.put("/:id", (req, res) => {
         }
 
         const existingStudent = db
-            .prepare("SELECT * FROM students WHERE id = ?")
-            .get(req.params.id);
+            .prepare(`
+                SELECT id
+                FROM students
+                WHERE id = ? AND schoolId = ?
+            `)
+            .get(
+                req.params.id,
+                schoolId
+            );
 
         if (!existingStudent) {
             return res.status(404).json({
@@ -126,18 +176,28 @@ router.put("/:id", (req, res) => {
 
         db.prepare(`
             UPDATE students
-            SET name = ?, age = ?, className = ?
-            WHERE id = ?
+            SET name = ?,
+                age = ?,
+                className = ?
+            WHERE id = ? AND schoolId = ?
         `).run(
             name,
             age,
             className,
-            req.params.id
+            req.params.id,
+            schoolId
         );
 
         const updatedStudent = db
-            .prepare("SELECT * FROM students WHERE id = ?")
-            .get(req.params.id);
+            .prepare(`
+                SELECT id, name, age, className, photo
+                FROM students
+                WHERE id = ? AND schoolId = ?
+            `)
+            .get(
+                req.params.id,
+                schoolId
+            );
 
         res.json(updatedStudent);
 
@@ -151,16 +211,144 @@ router.put("/:id", (req, res) => {
     }
 });
 
+// ============================================================
+// UPLOAD / SAVE STUDENT PHOTO
+// ============================================================
 
-// ===============================
+router.put("/:id/photo", (req, res) => {
+    try {
+        const schoolId = getSchoolId(req, res);
+        if (!schoolId) return;
+
+        const photo = req.body && req.body.photo;
+
+        if (!photo || typeof photo !== "string") {
+            return res.status(400).json({
+                error: "Photo is required"
+            });
+        }
+
+        // Only accept image data URLs.
+        if (!photo.startsWith("data:image/")) {
+            return res.status(400).json({
+                error: "Invalid image format"
+            });
+        }
+
+        // Keep database records reasonably sized.
+        if (photo.length > 3000000) {
+            return res.status(413).json({
+                error: "Photo is too large. Please choose a smaller photo."
+            });
+        }
+
+        const student = db
+            .prepare(`
+                SELECT id
+                FROM students
+                WHERE id = ? AND schoolId = ?
+            `)
+            .get(req.params.id, schoolId);
+
+        if (!student) {
+            return res.status(404).json({
+                error: "Student not found"
+            });
+        }
+
+        db.prepare(`
+            UPDATE students
+            SET photo = ?
+            WHERE id = ? AND schoolId = ?
+        `).run(
+            photo,
+            req.params.id,
+            schoolId
+        );
+
+        const updatedStudent = db
+            .prepare(`
+                SELECT id, name, age, className, photo
+                FROM students
+                WHERE id = ? AND schoolId = ?
+            `)
+            .get(
+                req.params.id,
+                schoolId
+            );
+
+        res.json({
+            message: "Student photo saved successfully",
+            student: updatedStudent
+        });
+
+    } catch (error) {
+        console.error("SAVE STUDENT PHOTO ERROR:", error);
+
+        res.status(500).json({
+            error: "Failed to save student photo",
+            details: error.message
+        });
+    }
+});
+
+// ============================================================
+// REMOVE STUDENT PHOTO
+// ============================================================
+
+router.delete("/:id/photo", (req, res) => {
+    try {
+        const schoolId = getSchoolId(req, res);
+        if (!schoolId) return;
+
+        const result = db
+            .prepare(`
+                UPDATE students
+                SET photo = NULL
+                WHERE id = ? AND schoolId = ?
+            `)
+            .run(
+                req.params.id,
+                schoolId
+            );
+
+        if (result.changes === 0) {
+            return res.status(404).json({
+                error: "Student not found"
+            });
+        }
+
+        res.json({
+            message: "Student photo removed successfully"
+        });
+
+    } catch (error) {
+        console.error("REMOVE STUDENT PHOTO ERROR:", error);
+
+        res.status(500).json({
+            error: "Failed to remove student photo"
+        });
+    }
+});
+
+// ============================================================
 // DELETE STUDENT
-// ===============================
+// ============================================================
 
 router.delete("/:id", (req, res) => {
     try {
+        const schoolId = getSchoolId(req, res);
+        if (!schoolId) return;
+
         const result = db
-            .prepare("DELETE FROM students WHERE id = ?")
-            .run(req.params.id);
+            .prepare(`
+                DELETE FROM students
+                WHERE id = ? AND schoolId = ?
+            `)
+            .run(
+                req.params.id,
+                schoolId
+            );
 
         if (result.changes === 0) {
             return res.status(404).json({
@@ -180,6 +368,5 @@ router.delete("/:id", (req, res) => {
         });
     }
 });
-
 
 module.exports = router;
