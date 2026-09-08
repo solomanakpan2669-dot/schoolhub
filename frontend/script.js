@@ -19,6 +19,18 @@ function getToken() {
     return localStorage.getItem(TOKEN_KEY);
 }
 
+
+function updateSchoolNameDisplay() {
+    const school = getSchool();
+    const display = document.getElementById("schoolNameDisplay");
+
+    if (display) {
+        display.textContent = school && school.name
+            ? "🏫 " + school.name
+            : "🏫 SchoolConnect";
+    }
+}
+
 function getSchool() {
     try {
         return JSON.parse(
@@ -2446,4 +2458,9 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
     }
+});
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    updateSchoolNameDisplay();
 });
