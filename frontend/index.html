@@ -108,6 +108,35 @@
             background: #dc2626;
             color: white;
         }
+
+        .password-field {
+            position: relative;
+            width: 100%;
+        }
+
+        .password-field input {
+            padding-right: 85px;
+        }
+
+        .show-password-button {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: auto !important;
+            margin: 0 !important;
+            padding: 6px 8px !important;
+            border: none;
+            background: transparent;
+            color: #2563eb;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .show-password-button:hover {
+            opacity: 0.75;
+        }
     </style>
 
 
@@ -299,12 +328,23 @@
                 Password
             </label>
 
-            <input
-                type="password"
-                id="schoolPassword"
-                placeholder="Enter password"
-                required
-            >
+            <div class="password-field">
+                <input
+                    type="password"
+                    id="schoolPassword"
+                    placeholder="Enter password"
+                    required
+                >
+
+                <button
+                    type="button"
+                    class="show-password-button"
+                    onclick="toggleSchoolPassword()"
+                    id="showPasswordButton"
+                >
+                    👁️ Show
+                </button>
+            </div>
 
             <button
                 type="submit"
@@ -1143,6 +1183,66 @@
      * The server must confirm that the token is valid.
      */
 
+    function restoreSavedSchoolCode() {
+
+        const schoolCodeInput =
+            document.getElementById("schoolCode");
+
+        if (!schoolCodeInput) {
+            return;
+        }
+
+        try {
+
+            const savedSchool =
+                JSON.parse(
+                    localStorage.getItem("schoolconnect_school") || "null"
+                );
+
+            if (savedSchool && savedSchool.code) {
+
+                schoolCodeInput.value =
+                    savedSchool.code;
+
+            }
+
+        } catch (error) {
+
+            console.warn(
+                "Could not restore saved school code.",
+                error
+            );
+
+        }
+    }
+
+
+    function toggleSchoolPassword() {
+
+        const passwordInput =
+            document.getElementById("schoolPassword");
+
+        const button =
+            document.getElementById("showPasswordButton");
+
+        if (!passwordInput || !button) {
+            return;
+        }
+
+        if (passwordInput.type === "password") {
+
+            passwordInput.type = "text";
+            button.textContent = "🙈 Hide";
+
+        } else {
+
+            passwordInput.type = "password";
+            button.textContent = "👁️ Show";
+
+        }
+    }
+
+
     async function updateAuthScreen() {
 
         const authScreen =
@@ -1251,9 +1351,12 @@
             "loginScreen"
         ).style.display = "block";
 
+        restoreSavedSchoolCode();
+
     }
 
 
+    restoreSavedSchoolCode();
     updateAuthScreen();
 
 </script>
