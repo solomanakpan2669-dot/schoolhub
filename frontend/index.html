@@ -1154,16 +1154,14 @@
         const token =
             localStorage.getItem("schoolconnect_token");
 
-        // No saved login = always show login.
+        // No login saved.
         if (!token) {
-
             authScreen.style.display = "flex";
             dashboardApp.style.display = "none";
-
             return;
         }
 
-        // Hide the dashboard until the server confirms login.
+        // Keep the login screen visible while checking.
         authScreen.style.display = "flex";
         dashboardApp.style.display = "none";
 
@@ -1175,23 +1173,57 @@
                 }
             });
 
+            // ONLY a real authentication failure should log the
+            // school out. Do NOT delete the token for server errors.
+            if (response.status === 401) {
+
+                localStorage.removeItem("schoolconnect_token");
+                localStorage.removeItem("schoolconnect_school");
+
+                authScreen.style.display = "flex";
+                dashboardApp.style.display = "none";
+
+                return;
+            }
+
+            // Server may be waking up or temporarily unavailable.
+            // Keep the saved login instead of destroying it.
             if (!response.ok) {
-                throw new Error("Invalid login");
+
+                console.warn(
+                    "Server temporarily unavailable. Keeping saved login."
+                );
+
+                authScreen.style.display = "flex";
+                dashboardApp.style.display = "none";
+
+                return;
             }
 
             // Token is valid.
             authScreen.style.display = "none";
             dashboardApp.style.display = "block";
 
+            // Update the school name immediately.
+            if (typeof updateSchoolNameDisplay === "function") {
+                updateSchoolNameDisplay();
+            }
+
+            if (typeof displaySchoolName === "function") {
+                displaySchoolName();
+            }
+
         } catch (error) {
 
-            // Remove invalid/stale login.
-            localStorage.removeItem("schoolconnect_token");
-            localStorage.removeItem("schoolconnect_school");
+            // Network/server problem.
+            // NEVER delete a valid saved login because of this.
+            console.warn(
+                "Could not verify login right now. Keeping saved login.",
+                error
+            );
 
             authScreen.style.display = "flex";
             dashboardApp.style.display = "none";
-
         }
     }
 
