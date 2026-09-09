@@ -1,4 +1,7 @@
-const API_URL = "/api";
+const API_URL =
+    window.location.port === "5500"
+        ? "http://localhost:3000/api"
+        : "/api";
 
 let students = [];
 let teachers = [];

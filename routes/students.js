@@ -15,11 +15,6 @@ router.get("/", (req, res) => {
     try {
         const schoolId = 1;
 
-        if (!schoolId) {
-            return res.status(401).json({
-                error: "School login required"
-            });
-        }
 
         const students = db.prepare(`
             SELECT id, name, age, className, photo
@@ -49,11 +44,6 @@ router.get("/:id", (req, res) => {
         const schoolId = 1;
         const studentId = Number(req.params.id);
 
-        if (!schoolId) {
-            return res.status(401).json({
-                error: "School login required"
-            });
-        }
 
         if (!Number.isInteger(studentId)) {
             return res.status(400).json({
@@ -94,11 +84,6 @@ router.post("/", (req, res) => {
     try {
         const schoolId = 1;
 
-        if (!schoolId) {
-            return res.status(401).json({
-                error: "School login required"
-            });
-        }
 
         const name = String(req.body?.name || "").trim();
         const age = Number(req.body?.age);
@@ -161,11 +146,6 @@ router.put("/:id", (req, res) => {
         const schoolId = 1;
         const studentId = Number(req.params.id);
 
-        if (!schoolId) {
-            return res.status(401).json({
-                error: "School login required"
-            });
-        }
 
         const name = String(req.body?.name || "").trim();
         const age = Number(req.body?.age);
@@ -240,11 +220,6 @@ router.put("/:id/photo", (req, res) => {
         const schoolId = 1;
         const studentId = Number(req.params.id);
 
-        if (!schoolId) {
-            return res.status(401).json({
-                error: "School login required"
-            });
-        }
 
         if (!Number.isInteger(studentId)) {
             return res.status(400).json({
@@ -331,11 +306,6 @@ router.delete("/:id/photo", (req, res) => {
         const schoolId = 1;
         const studentId = Number(req.params.id);
 
-        if (!schoolId) {
-            return res.status(401).json({
-                error: "School login required"
-            });
-        }
 
         if (!Number.isInteger(studentId)) {
             return res.status(400).json({
@@ -394,11 +364,6 @@ router.delete("/:id", (req, res) => {
         const schoolId = 1;
         const studentId = Number(req.params.id);
 
-        if (!schoolId) {
-            return res.status(401).json({
-                error: "School login required"
-            });
-        }
 
         if (!Number.isInteger(studentId)) {
             return res.status(400).json({
