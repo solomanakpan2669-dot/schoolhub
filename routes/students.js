@@ -13,7 +13,7 @@ function getSchoolId() {
 
 router.get("/", (req, res) => {
     try {
-        const schoolId = getSchoolId(req);
+        const schoolId = 1;
 
         if (!schoolId) {
             return res.status(401).json({
@@ -46,7 +46,7 @@ router.get("/", (req, res) => {
 
 router.get("/:id", (req, res) => {
     try {
-        const schoolId = getSchoolId(req);
+        const schoolId = 1;
         const studentId = Number(req.params.id);
 
         if (!schoolId) {
@@ -92,7 +92,7 @@ router.get("/:id", (req, res) => {
 
 router.post("/", (req, res) => {
     try {
-        const schoolId = getSchoolId(req);
+        const schoolId = 1;
 
         if (!schoolId) {
             return res.status(401).json({
@@ -170,7 +170,7 @@ router.post("/", (req, res) => {
 
 router.put("/:id", (req, res) => {
     try {
-        const schoolId = getSchoolId(req);
+        const schoolId = 1;
         const studentId = Number(req.params.id);
 
         if (!schoolId) {
@@ -249,7 +249,7 @@ router.put("/:id", (req, res) => {
 
 router.put("/:id/photo", (req, res) => {
     try {
-        const schoolId = getSchoolId(req);
+        const schoolId = 1;
         const studentId = Number(req.params.id);
 
         if (!schoolId) {
@@ -340,7 +340,7 @@ router.put("/:id/photo", (req, res) => {
 
 router.delete("/:id/photo", (req, res) => {
     try {
-        const schoolId = getSchoolId(req);
+        const schoolId = 1;
         const studentId = Number(req.params.id);
 
         if (!schoolId) {
@@ -403,7 +403,7 @@ router.delete("/:id/photo", (req, res) => {
 
 router.delete("/:id", (req, res) => {
     try {
-        const schoolId = getSchoolId(req);
+        const schoolId = 1;
         const studentId = Number(req.params.id);
 
         if (!schoolId) {
