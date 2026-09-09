@@ -7,8 +7,6 @@ const teachersRouter = require("./routes/teachers");
 const classesRouter = require("./routes/classes");
 const schoolsRouter = require("./routes/schools");
 
-const { requireAuth } = require("./middleware/auth");
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -25,23 +23,11 @@ app.use("/api/schools", schoolsRouter);
 // PROTECTED SCHOOL DATA ROUTES
 // ======================================================
 
-app.use(
-    "/api/students",
-    requireAuth,
-    studentsRouter
-);
+app.use("/api/students", studentsRouter);
 
-app.use(
-    "/api/teachers",
-    requireAuth,
-    teachersRouter
-);
+app.use("/api/teachers", teachersRouter);
 
-app.use(
-    "/api/classes",
-    requireAuth,
-    classesRouter
-);
+app.use("/api/classes", classesRouter);
 
 // ======================================================
 // FRONTEND

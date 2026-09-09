@@ -281,7 +281,7 @@ function toggleSchoolPassword(){const e=document.getElementById("schoolPassword"
 
 async function updateAuthScreen(){
  const a=document.getElementById("authScreen"),d=document.getElementById("dashboardApp");if(!a||!d)return;
- if(!isLoggedIn()){a.style.display="flex";d.style.display="none";return}
+ a.style.display="none";d.style.display="block";
  try{await getJSON(`${API_URL}/students`);a.style.display="none";d.style.display="block"}catch{clearLogin();a.style.display="flex";d.style.display="none"}
 }
 
@@ -295,7 +295,7 @@ function setupApplication(){
  document.getElementById("logoutButton")?.addEventListener("click",logoutSchool);
  document.getElementById("studentPhotoUpload")?.addEventListener("change",uploadStudentPhoto);
  document.addEventListener("click",e=>{if(e.target.classList.contains("modal"))closeModal(e.target.id)});
- if(isLoggedIn())Promise.all([loadStudents(),loadTeachers(),loadClasses()]);
+ Promise.all([loadStudents(),loadTeachers(),loadClasses()]);
 }
 
 window.loginSchool=loginSchool;window.registerSchool=registerSchool;window.logoutSchool=logoutSchool;
