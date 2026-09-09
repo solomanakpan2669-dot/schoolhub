@@ -1710,3 +1710,28 @@ viewButtonStyle.textContent = `
     }
 `;
 document.head.appendChild(viewButtonStyle);
+
+/* FINAL STUDENT SEARCH FIX */
+function searchStudents() {
+    const input = document.getElementById("studentSearch");
+
+    if (!input) return;
+
+    const query = input.value.trim().toLowerCase();
+
+    const filtered = students.filter(student => {
+        const id = String(student.id ?? "").toLowerCase();
+        const name = String(student.name ?? "").toLowerCase();
+        const age = String(student.age ?? "").toLowerCase();
+        const className = String(student.className ?? "").toLowerCase();
+
+        return (
+            id.includes(query) ||
+            name.includes(query) ||
+            age.includes(query) ||
+            className.includes(query)
+        );
+    });
+
+    renderStudents(filtered);
+}
