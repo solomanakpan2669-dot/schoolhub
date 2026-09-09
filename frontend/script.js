@@ -2341,3 +2341,257 @@ document.addEventListener("DOMContentLoaded", () => {
     createMonthlyAttendanceSection();
 });
 
+
+/* =========================================================
+   MONTHLY ATTENDANCE
+========================================================= */
+
+function createMonthlyAttendanceSection() {
+    if (document.getElementById("monthlyAttendance")) return;
+
+    const nav = document.querySelector("nav");
+
+    if (nav) {
+        const button = document.createElement("button");
+        button.className = "tab-button";
+        button.textContent = "📊 Monthly";
+        button.onclick = () =>
+            showSection("monthlyAttendance");
+
+        nav.appendChild(button);
+    }
+
+    const main = document.querySelector("main");
+
+    if (!main) return;
+
+    const section = document.createElement("section");
+
+    section.id = "monthlyAttendance";
+    section.className = "section";
+    section.style.display = "none";
+
+    section.innerHTML = `
+        <div class="section-header">
+            <div>
+                <h2>Monthly Attendance</h2>
+                <p>View student attendance for an entire month</p>
+            </div>
+        </div>
+
+        <div style="
+            display:flex;
+            gap:12px;
+            align-items:center;
+            flex-wrap:wrap;
+            margin:20px 0;
+        ">
+            <label>
+                <strong>Month:</strong>
+            </label>
+
+            <input
+                type="month"
+                id="monthlyAttendanceDate"
+                style="
+                    padding:10px;
+                    border:1px solid #d1d5db;
+                    border-radius:8px;
+                "
+            >
+
+            <button
+                type="button"
+                class="primary-button"
+                onclick="loadMonthlyAttendance()">
+                📊 View Monthly Report
+            </button>
+        </div>
+
+        <div id="monthlyAttendanceSummary"
+             style="margin-bottom:15px;font-weight:600;">
+        </div>
+
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Class</th>
+                        <th>Present</th>
+                        <th>Absent</th>
+                        <th>Late</th>
+                        <th>Total Days</th>
+                        <th>Attendance</th>
+                    </tr>
+                </thead>
+
+                <tbody id="monthlyAttendanceTable">
+                    <tr>
+                        <td colspan="7">
+                            Select a month to view attendance.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    main.appendChild(section);
+
+    const input =
+        document.getElementById("monthlyAttendanceDate");
+
+    if (input) {
+        input.value =
+            new Date().toISOString().slice(0, 7);
+    }
+}
+
+async function loadMonthlyAttendance() {
+    const input =
+        document.getElementById("monthlyAttendanceDate");
+
+    const table =
+        document.getElementById("monthlyAttendanceTable");
+
+    const summary =
+        document.getElementById("monthlyAttendanceSummary");
+
+    if (!input || !table) return;
+
+    const month = input.value;
+
+    if (!month) {
+        alert("Please select a month.");
+        return;
+    }
+
+    try {
+        const data = await getJSON(
+            API_URL +
+            "/attendance/monthly?month=" +
+            encodeURIComponent(month)
+        );
+
+        if (!data.length) {
+            table.innerHTML = `
+                <tr>
+                    <td colspan="7">
+                        No students found.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        let totalPresent = 0;
+        let totalAbsent = 0;
+        let totalLate = 0;
+
+        table.innerHTML = data.map(student => {
+            totalPresent += Number(student.present) || 0;
+            totalAbsent += Number(student.absent) || 0;
+            totalLate += Number(student.late) || 0;
+
+            const photo = student.photo
+                ? `
+                    <img
+                        src="${escapeHTML(student.photo)}"
+                        style="
+                            width:38px;
+                            height:38px;
+                            border-radius:50%;
+                            object-fit:cover;
+                        "
+                    >
+                `
+                : `
+                    <div style="
+                        width:38px;
+                        height:38px;
+                        border-radius:50%;
+                        display:inline-flex;
+                        align-items:center;
+                        justify-content:center;
+                        background:linear-gradient(
+                            135deg,
+                            #2563eb,
+                            #7c3aed
+                        );
+                        color:white;
+                        font-weight:700;
+                    ">
+                        ${escapeHTML(
+                            (student.name || "S")
+                                .charAt(0)
+                                .toUpperCase()
+                        )}
+                    </div>
+                `;
+
+            return `
+                <tr>
+                    <td>
+                        <div style="
+                            display:flex;
+                            align-items:center;
+                            gap:10px;
+                        ">
+                            ${photo}
+                            <strong>
+                                ${escapeHTML(student.name)}
+                            </strong>
+                        </div>
+                    </td>
+
+                    <td>
+                        ${escapeHTML(student.className)}
+                    </td>
+
+                    <td>${student.present}</td>
+                    <td>${student.absent}</td>
+                    <td>${student.late}</td>
+                    <td>${student.total}</td>
+
+                    <td>
+                        <strong>
+                            ${student.percentage}%
+                        </strong>
+                    </td>
+                </tr>
+            `;
+        }).join("");
+
+        summary.textContent =
+            `Present: ${totalPresent} | ` +
+            `Absent: ${totalAbsent} | ` +
+            `Late: ${totalLate}`;
+
+    } catch (error) {
+        console.error(
+            "MONTHLY ATTENDANCE ERROR:",
+            error
+        );
+
+        table.innerHTML = `
+            <tr>
+                <td colspan="7">
+                    Failed to load monthly attendance.
+                </td>
+            </tr>
+        `;
+    }
+}
+
+window.createMonthlyAttendanceSection =
+    createMonthlyAttendanceSection;
+
+window.loadMonthlyAttendance =
+    loadMonthlyAttendance;
+
+/* Create monthly attendance when the page loads */
+document.addEventListener("DOMContentLoaded", () => {
+    createMonthlyAttendanceSection();
+});
+
