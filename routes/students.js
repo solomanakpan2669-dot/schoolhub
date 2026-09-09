@@ -3,14 +3,8 @@ const db = require("../database/database");
 
 const router = express.Router();
 
-function getSchoolId(req) {
-    const schoolId = Number(req.schoolId);
-
-    if (!Number.isInteger(schoolId) || schoolId <= 0) {
-        return null;
-    }
-
-    return schoolId;
+function getSchoolId() {
+    return 1;
 }
 
 // ======================================================

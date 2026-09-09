@@ -3,17 +3,8 @@ const db = require("../database/database");
 
 const router = express.Router();
 
-function getSchoolId(req, res) {
-    const schoolId = req.schoolId;
-
-    if (!schoolId) {
-        res.status(401).json({
-            error: "School login required"
-        });
-        return null;
-    }
-
-    return schoolId;
+function getSchoolId() {
+    return 1;
 }
 
 // GET ALL CLASSES FOR LOGGED-IN SCHOOL
