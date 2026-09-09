@@ -183,30 +183,16 @@ function renderStudents(list = students) {
 }
 
 function searchStudents() {
-
-    const input = getElement("studentSearch");
+    const input = document.getElementById("studentSearch");
 
     if (!input) return;
 
-    const search = input.value
-        .trim()
-        .toLowerCase();
-
-    if (!search) {
-        renderStudents();
-        return;
-    }
+    const query = input.value.trim().toLowerCase();
 
     const filtered = students.filter(student => {
+        const name = String(student.name || "").toLowerCase();
 
-        return `
-            ${student.id}
-            ${student.name}
-            ${student.age}
-            ${student.className}
-        `
-            .toLowerCase()
-            .includes(search);
+        return name.includes(query);
     });
 
     renderStudents(filtered);
