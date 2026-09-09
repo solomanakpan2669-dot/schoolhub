@@ -279,11 +279,13 @@ function showRegisterScreen(){document.getElementById("loginScreen")?.style.setP
 function showLoginScreen(){document.getElementById("registerScreen")?.style.setProperty("display","none");document.getElementById("loginScreen")?.style.setProperty("display","block");}
 function toggleSchoolPassword(){const e=document.getElementById("schoolPassword");if(e)e.type=e.type==="password"?"text":"password";}
 
-async function updateAuthScreen(){
+async function updateAuthScreen(){return; /*
  const a=document.getElementById("authScreen"),d=document.getElementById("dashboardApp");if(!a||!d)return;
  a.style.display="none";d.style.display="block";
  try{await getJSON(`${API_URL}/students`);a.style.display="none";d.style.display="block"}catch{clearLogin();a.style.display="flex";d.style.display="none"}
 }
+
+*/}
 
 function setupApplication(){
  updateSchoolNameDisplay();
