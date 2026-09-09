@@ -171,6 +171,13 @@ function renderStudents(list = students) {
 
             <td>
                 <button
+                    class="view-btn"
+                    onclick="viewStudent(${Number(student.id)})"
+                >
+                    View
+                </button>
+
+                <button
                     class="edit-btn"
                     onclick="editStudent(${Number(student.id)})"
                 >
@@ -732,6 +739,13 @@ function renderTeachers(list = teachers) {
                 </td>
 
                 <td>
+
+                    <button
+                        class="view-btn"
+                        onclick="viewTeacher(${Number(teacher.id)})"
+                    >
+                        View
+                    </button>
 
                     <button
                         class="edit-btn"
