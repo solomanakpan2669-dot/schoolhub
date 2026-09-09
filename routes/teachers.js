@@ -16,7 +16,11 @@ function getSchoolId(req, res) {
     return schoolId;
 }
 
-// GET ALL TEACHERS FOR LOGGED-IN SCHOOL
+
+// =========================================================
+// GET ALL TEACHERS
+// =========================================================
+
 router.get("/", (req, res) => {
     try {
         const schoolId = getSchoolId(req, res);
@@ -24,7 +28,7 @@ router.get("/", (req, res) => {
 
         const teachers = db
             .prepare(`
-                SELECT id, name, age, subject, email
+                SELECT id, name, age, subject, email, photo
                 FROM teachers
                 WHERE schoolId = ?
                 ORDER BY id DESC
@@ -37,12 +41,17 @@ router.get("/", (req, res) => {
         console.error("GET TEACHERS ERROR:", error);
 
         res.status(500).json({
-            error: "Failed to get teachers"
+            error: "Failed to get teachers",
+            details: error.message
         });
     }
 });
 
+
+// =========================================================
 // GET ONE TEACHER
+// =========================================================
+
 router.get("/:id", (req, res) => {
     try {
         const schoolId = getSchoolId(req, res);
@@ -50,7 +59,7 @@ router.get("/:id", (req, res) => {
 
         const teacher = db
             .prepare(`
-                SELECT id, name, age, subject, email
+                SELECT id, name, age, subject, email, photo
                 FROM teachers
                 WHERE id = ? AND schoolId = ?
             `)
@@ -68,12 +77,17 @@ router.get("/:id", (req, res) => {
         console.error("GET TEACHER ERROR:", error);
 
         res.status(500).json({
-            error: "Failed to get teacher"
+            error: "Failed to get teacher",
+            details: error.message
         });
     }
 });
 
+
+// =========================================================
 // ADD TEACHER
+// =========================================================
+
 router.post("/", (req, res) => {
     try {
         const schoolId = getSchoolId(req, res);
@@ -81,14 +95,29 @@ router.post("/", (req, res) => {
 
         const body = req.body || {};
 
-        const name = body.name;
-        const age = body.age;
-        const subject = body.subject;
-        const email = body.email;
+        const name = String(body.name || "").trim();
+        const age = Number(body.age);
+        const subject = String(body.subject || "").trim();
+        const email = String(body.email || "").trim();
 
         if (!name || !age || !subject || !email) {
             return res.status(400).json({
                 error: "Name, age, subject and email are required"
+            });
+        }
+
+        const emailOwner = db
+            .prepare(`
+                SELECT id
+                FROM teachers
+                WHERE email = ?
+                AND schoolId = ?
+            `)
+            .get(email, schoolId);
+
+        if (emailOwner) {
+            return res.status(409).json({
+                error: "A teacher with this email already exists"
             });
         }
 
@@ -108,7 +137,7 @@ router.post("/", (req, res) => {
 
         const teacher = db
             .prepare(`
-                SELECT id, name, age, subject, email
+                SELECT id, name, age, subject, email, photo
                 FROM teachers
                 WHERE id = ? AND schoolId = ?
             `)
@@ -129,7 +158,11 @@ router.post("/", (req, res) => {
     }
 });
 
+
+// =========================================================
 // UPDATE TEACHER
+// =========================================================
+
 router.put("/:id", (req, res) => {
     try {
         const schoolId = getSchoolId(req, res);
@@ -138,10 +171,10 @@ router.put("/:id", (req, res) => {
         const id = req.params.id;
         const body = req.body || {};
 
-        const name = body.name;
-        const age = body.age;
-        const subject = body.subject;
-        const email = body.email;
+        const name = String(body.name || "").trim();
+        const age = Number(body.age);
+        const subject = String(body.subject || "").trim();
+        const email = String(body.email || "").trim();
 
         if (!name || !age || !subject || !email) {
             return res.status(400).json({
@@ -202,7 +235,7 @@ router.put("/:id", (req, res) => {
 
         const updatedTeacher = db
             .prepare(`
-                SELECT id, name, age, subject, email
+                SELECT id, name, age, subject, email, photo
                 FROM teachers
                 WHERE id = ? AND schoolId = ?
             `)
@@ -220,7 +253,146 @@ router.put("/:id", (req, res) => {
     }
 });
 
+
+// =========================================================
+// UPLOAD TEACHER PHOTO
+// =========================================================
+
+router.put("/:id/photo", (req, res) => {
+    try {
+        const schoolId = getSchoolId(req, res);
+        if (!schoolId) return;
+
+        const id = req.params.id;
+        const photo = req.body && req.body.photo;
+
+        if (!photo) {
+            return res.status(400).json({
+                error: "Teacher photo is required"
+            });
+        }
+
+        if (typeof photo !== "string") {
+            return res.status(400).json({
+                error: "Invalid teacher photo"
+            });
+        }
+
+        if (!photo.startsWith("data:image/")) {
+            return res.status(400).json({
+                error: "Only image photos are allowed"
+            });
+        }
+
+        if (photo.length > 3000000) {
+            return res.status(413).json({
+                error: "Teacher photo is too large"
+            });
+        }
+
+        const teacher = db
+            .prepare(`
+                SELECT id
+                FROM teachers
+                WHERE id = ? AND schoolId = ?
+            `)
+            .get(id, schoolId);
+
+        if (!teacher) {
+            return res.status(404).json({
+                error: "Teacher not found"
+            });
+        }
+
+        db.prepare(`
+            UPDATE teachers
+            SET photo = ?
+            WHERE id = ?
+            AND schoolId = ?
+        `).run(
+            photo,
+            id,
+            schoolId
+        );
+
+        const updatedTeacher = db
+            .prepare(`
+                SELECT id, name, age, subject, email, photo
+                FROM teachers
+                WHERE id = ? AND schoolId = ?
+            `)
+            .get(id, schoolId);
+
+        res.json({
+            message: "Teacher photo uploaded successfully",
+            teacher: updatedTeacher
+        });
+
+    } catch (error) {
+        console.error("UPLOAD TEACHER PHOTO ERROR:", error);
+
+        res.status(500).json({
+            error: "Failed to upload teacher photo",
+            details: error.message
+        });
+    }
+});
+
+
+// =========================================================
+// DELETE TEACHER PHOTO
+// =========================================================
+
+router.delete("/:id/photo", (req, res) => {
+    try {
+        const schoolId = getSchoolId(req, res);
+        if (!schoolId) return;
+
+        const id = req.params.id;
+
+        const result = db
+            .prepare(`
+                UPDATE teachers
+                SET photo = NULL
+                WHERE id = ?
+                AND schoolId = ?
+            `)
+            .run(id, schoolId);
+
+        if (result.changes === 0) {
+            return res.status(404).json({
+                error: "Teacher not found"
+            });
+        }
+
+        const teacher = db
+            .prepare(`
+                SELECT id, name, age, subject, email, photo
+                FROM teachers
+                WHERE id = ? AND schoolId = ?
+            `)
+            .get(id, schoolId);
+
+        res.json({
+            message: "Teacher photo removed successfully",
+            teacher
+        });
+
+    } catch (error) {
+        console.error("DELETE TEACHER PHOTO ERROR:", error);
+
+        res.status(500).json({
+            error: "Failed to remove teacher photo",
+            details: error.message
+        });
+    }
+});
+
+
+// =========================================================
 // DELETE TEACHER
+// =========================================================
+
 router.delete("/:id", (req, res) => {
     try {
         const schoolId = getSchoolId(req, res);
@@ -229,7 +401,8 @@ router.delete("/:id", (req, res) => {
         const result = db
             .prepare(`
                 DELETE FROM teachers
-                WHERE id = ? AND schoolId = ?
+                WHERE id = ?
+                AND schoolId = ?
             `)
             .run(
                 req.params.id,
@@ -250,9 +423,11 @@ router.delete("/:id", (req, res) => {
         console.error("DELETE TEACHER ERROR:", error);
 
         res.status(500).json({
-            error: "Failed to delete teacher"
+            error: "Failed to delete teacher",
+            details: error.message
         });
     }
 });
+
 
 module.exports = router;

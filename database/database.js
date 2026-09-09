@@ -86,3 +86,27 @@ db.exec(`
 `);
 
 module.exports = db;
+
+
+// =========================================================
+// TEACHER PHOTO MIGRATION
+// =========================================================
+
+try {
+    const teacherColumns = db.prepare("PRAGMA table_info(teachers)").all();
+
+    const hasPhotoColumn = teacherColumns.some(
+        column => column.name === "photo"
+    );
+
+    if (!hasPhotoColumn) {
+        db.exec(`
+            ALTER TABLE teachers
+            ADD COLUMN photo TEXT
+        `);
+
+        console.log("Teacher photo column added successfully.");
+    }
+} catch (error) {
+    console.error("TEACHER PHOTO MIGRATION ERROR:", error);
+}
