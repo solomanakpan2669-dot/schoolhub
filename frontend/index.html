@@ -1,1195 +1,419 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-
-<title>SchoolConnect - School Management System</title>
-
-<link rel="stylesheet" href="style.css">
-
-<style>
-    /* =========================
-       SCHOOL LOGIN
-    ========================== */
-
-    #authScreen {
-        min-height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 30px 15px;
-        box-sizing: border-box;
-    }
-
-    .auth-card {
-        width: 100%;
-        max-width: 430px;
-        background: white;
-        padding: 35px;
-        border-radius: 16px;
-        box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12);
-        box-sizing: border-box;
-    }
-
-    .auth-card h2 {
-        text-align: center;
-        margin-bottom: 8px;
-    }
-
-    .auth-card .auth-subtitle {
-        text-align: center;
-        color: #666;
-        margin-bottom: 25px;
-    }
-
-    .auth-card label {
-        display: block;
-        margin-top: 15px;
-        margin-bottom: 6px;
-        font-weight: 600;
-    }
-
-    .auth-card input {
-        width: 100%;
-        padding: 12px;
-        box-sizing: border-box;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        font-size: 15px;
-    }
-
-    .auth-card button {
-        width: 100%;
-        margin-top: 20px;
-    }
-
-    .auth-switch {
-        text-align: center;
-        margin-top: 20px;
-    }
-
-    .auth-switch button {
-        width: auto;
-        margin: 0;
-        padding: 0;
-        background: none;
-        border: none;
-        color: #2563eb;
-        cursor: pointer;
-        font-size: 15px;
-    }
-
-    #registerScreen {
-        display: none;
-    }
-
-    #dashboardApp {
-        display: none;
-    }
-
-    .school-account {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-left: auto;
-    }
-
-    .school-name-display {
-        font-weight: 600;
-    }
-
-    .logout-button {
-        padding: 8px 14px;
-        border: none;
-        border-radius: 7px;
-        cursor: pointer;
-        background: #dc2626;
-        color: white;
-    }
-
-    .password-field {
-        position: relative;
-        width: 100%;
-    }
-
-    .password-field input {
-        padding-right: 85px;
-    }
-
-    .show-password-button {
-        position: absolute;
-        right: 8px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: auto !important;
-        margin: 0 !important;
-        padding: 6px 8px !important;
-        border: none;
-        background: transparent;
-        color: #2563eb;
-        cursor: pointer;
-        font-size: 14px;
-        font-weight: 600;
-    }
-
-    .show-password-button:hover {
-        opacity: 0.75;
-    }
-</style>
-
-<style>
-    /* =========================================================
-       STUDENT PHOTO SYSTEM
-    ========================================================= */
-
-    .student-name-cell {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .student-avatar {
-        width: 46px;
-        height: 46px;
-        min-width: 46px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(135deg, #2563eb, #7c3aed);
-        color: white;
-        font-size: 21px;
-        font-weight: 700;
-        overflow: hidden;
-    }
-
-    .student-photo {
-        object-fit: cover;
-        display: block;
-    }
-
-    .student-name-cell strong {
-        display: block;
-    }
-
-    .student-name-cell small {
-        display: block;
-        margin-top: 3px;
-        color: #777;
-    }
-
-    .view-btn {
-        padding: 7px 10px;
-        margin-right: 4px;
-        border: none;
-        border-radius: 6px;
-        background: #2563eb;
-        color: white;
-        cursor: pointer;
-        font-weight: 600;
-    }
-
-    .view-btn:hover {
-        opacity: 0.85;
-    }
-
-    /* STUDENT PROFILE */
-
-    .student-profile {
-        text-align: center;
-        padding: 10px;
-    }
-
-    .student-profile-avatar {
-        width: 130px;
-        height: 130px;
-        margin: 10px auto 18px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(135deg, #2563eb, #7c3aed);
-        color: white;
-        font-size: 58px;
-        font-weight: 700;
-        overflow: hidden;
-        border: 4px solid white;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.18);
-    }
-
-    .student-profile-avatar img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .student-profile h2 {
-        margin: 5px 0 20px;
-    }
-
-    .student-profile-info {
-        display: grid;
-        gap: 10px;
-        text-align: left;
-    }
-
-    .student-profile-info div {
-        padding: 12px;
-        border-radius: 8px;
-        background: #f5f7fb;
-    }
-
-    .student-profile-info strong {
-        display: inline-block;
-        width: 70px;
-    }
-
-    .photo-upload-box {
-        margin-top: 20px;
-        padding: 15px;
-        border: 2px dashed #2563eb;
-        border-radius: 10px;
-        background: #f8faff;
-    }
-
-    .photo-upload-box p {
-        margin-top: 0;
-        font-weight: 600;
-    }
-
-    .photo-upload-box input[type="file"] {
-        width: 100%;
-        margin-bottom: 10px;
-    }
-
-    .photo-upload-actions {
-        display: flex;
-        gap: 8px;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-
-    .photo-upload-actions button {
-        padding: 9px 13px;
-        border: none;
-        border-radius: 7px;
-        cursor: pointer;
-        font-weight: 600;
-    }
-
-    .upload-photo-btn {
-        background: #2563eb;
-        color: white;
-    }
-
-    .remove-photo-btn {
-        background: #dc2626;
-        color: white;
-    }
-</style>
-
-
-<style>
-#authScreen { display: none !important; }
-#dashboardApp { display: block !important; }
-</style>
+    <title>School Management System</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<!-- =========================
-     AUTHENTICATION SCREEN
-========================== -->
+    <header class="topbar">
+        <div>
+            <h1>🏫 School Management System</h1>
+            <p>Manage students, teachers and classes</p>
+        </div>
+    </header>
 
-<div id="authScreen">
+    <main class="container">
 
+        <!-- Dashboard Cards -->
+        <section class="dashboard">
 
-<!-- LOGIN -->
-<div id="loginScreen" class="auth-card">
+            <div class="card">
+                <div class="card-icon">👨‍🎓</div>
+                <div>
+                    <h2 id="studentCount">0</h2>
+                    <p>Students</p>
+                </div>
+            </div>
 
-    <h2>🏫 SchoolConnect</h2>
+            <div class="card">
+                <div class="card-icon">👨‍🏫</div>
+                <div>
+                    <h2 id="teacherCount">0</h2>
+                    <p>Teachers</p>
+                </div>
+            </div>
 
-    <p class="auth-subtitle">
-        Login to your school account
-    </p>
+            <div class="card">
+                <div class="card-icon">🏫</div>
+                <div>
+                    <h2 id="classCount">0</h2>
+                    <p>Classes</p>
+                </div>
+            </div>
 
-    <form id="schoolLoginForm">
+        </section>
 
-        <label for="schoolCode">
-            School Code
-        </label>
-
-        <input
-            type="text"
-            id="schoolCode"
-            placeholder="Enter school code"
-            required
-        >
-
-        <label for="schoolPassword">
-            Password
-        </label>
-
-        <div class="password-field">
-
-            <input
-                type="password"
-                id="schoolPassword"
-                placeholder="Enter password"
-                required
-            >
-
-            <button
-                type="button"
-                class="show-password-button"
-                onclick="toggleSchoolPassword()"
-                id="showPasswordButton"
-            >
-                👁️ Show
+        <!-- Navigation -->
+        <nav class="tabs">
+            <button class="tab-button active" onclick="showSection('students')">
+                👨‍🎓 Students
             </button>
 
-        </div>
+            <button class="tab-button" onclick="showSection('teachers')">
+                👨‍🏫 Teachers
+            </button>
 
-        <button
-            type="submit"
-            class="primary-button"
-        >
-            🔐 Login
-        </button>
+            <button class="tab-button" onclick="showSection('classes')">
+                🏫 Classes
+            </button>
+        </nav>
 
-    </form>
 
-    <div class="auth-switch">
+        <!-- =========================
+             STUDENTS
+        ========================== -->
 
-        <p>
-            Don't have a school account?
-        </p>
+        <section id="students" class="section active">
 
-        <button
-            type="button"
-            onclick="showRegisterScreen()"
-        >
-            Register your school
-        </button>
+            <div class="section-header">
 
-    </div>
+                <div>
+                    <h2>Students</h2>
+                    <p>Add, search and manage students</p>
+                </div>
 
-</div>
+                <button class="primary-button" onclick="openModal('studentModal')">
+                    + Add Student
+                </button>
 
-
-<!-- REGISTER -->
-<div id="registerScreen" class="auth-card">
-
-    <h2>🏫 Register School</h2>
-
-    <p class="auth-subtitle">
-        Create your school's SchoolConnect account
-    </p>
-
-    <form id="registerForm">
-
-        <label for="registerSchoolName">
-            School Name
-        </label>
-
-        <input
-            type="text"
-            id="registerSchoolName"
-            placeholder="Enter your school name"
-            required
-        >
-
-        <label for="registerSchoolPassword">
-            Password
-        </label>
-
-        <input
-            type="password"
-            id="registerSchoolPassword"
-            placeholder="Create a password"
-            required
-        >
-
-        <button
-            type="submit"
-            class="primary-button"
-        >
-            🏫 Register School
-        </button>
-
-    </form>
-
-    <div class="auth-switch">
-
-        <p>
-            Already have a school account?
-        </p>
-
-        <button
-            type="button"
-            onclick="showLoginScreen()"
-        >
-            Back to Login
-        </button>
-
-    </div>
-
-</div>
-
-
-</div>
-
-<!-- =========================
-     DASHBOARD APPLICATION
-========================== -->
-
-<div id="dashboardApp">
-
-<header class="topbar">
-
-
-<div>
-
-    <h1 id="schoolNameDisplay">🏫 SchoolConnect</h1>
-
-    <p>
-        School Management System
-    </p>
-
-</div>
-
-<div class="school-account">
-
-    <span
-        class="school-name-display"
-        data-school-name
-    >
-    </span>
-
-    <button
-        class="logout-button"
-        onclick="logoutSchool()"
-    >
-        Logout
-    </button>
-
-</div>
-
-
-</header>
-
-<main class="container">
-
-<!-- =========================
-     DASHBOARD
-========================== -->
-
-<section class="dashboard">
-
-
-<div class="card">
-
-    <div class="card-icon">
-        👨‍🎓
-    </div>
-
-    <div>
-
-        <h2 id="studentCount">
-            0
-        </h2>
-
-        <p>
-            Students
-        </p>
-
-    </div>
-
-</div>
-
-
-<div class="card">
-
-    <div class="card-icon">
-        👨‍🏫
-    </div>
-
-    <div>
-
-        <h2 id="teacherCount">
-            0
-        </h2>
-
-        <p>
-            Teachers
-        </p>
-
-    </div>
-
-</div>
-
-
-<div class="card">
-
-    <div class="card-icon">
-        🏫
-    </div>
-
-    <div>
-
-        <h2 id="classCount">
-            0
-        </h2>
-
-        <p>
-            Classes
-        </p>
-
-    </div>
-
-</div>
-
-
-</section>
-
-<!-- =========================
-     NAVIGATION
-========================== -->
-
-<nav class="tabs">
-
-
-<button
-    class="tab-button active"
-    onclick="showSection('students', this)"
->
-    👨‍🎓 Students
-</button>
-
-<button
-    class="tab-button"
-    onclick="showSection('teachers', this)"
->
-    👨‍🏫 Teachers
-</button>
-
-<button
-    class="tab-button"
-    onclick="showSection('classes', this)"
->
-    🏫 Classes
-</button>
-
-
-</nav>
-
-<!-- =========================
-     STUDENTS
-========================== -->
-
-<section
-    id="students"
-    class="section active"
->
-
-
-<div class="section-header">
-
-    <div>
-
-        <h2>
-            Students
-        </h2>
-
-        <p>
-            Add, search and manage students
-        </p>
-
-    </div>
-
-    <button
-        class="primary-button"
-        onclick="openModal('studentModal')"
-    >
-        + Add Student
-    </button>
-
-</div>
-
-
-<div class="search-container">
-
-    <input
-        type="search"
-        id="studentSearch"
-        placeholder="🔍 Search students by name or class..."
-        oninput="searchStudents()"
-    >
-
-</div>
-
-
-<div class="table-container">
-
-    <table>
-
-        <thead>
-
-            <tr>
-
-                <th>ID</th>
-                <th>Name</th>
-                <th>Age</th>
-                <th>Class</th>
-                <th>Action</th>
-
-            </tr>
-
-        </thead>
-
-
-        <tbody id="studentsTable">
-
-            <tr>
-
-                <td colspan="5">
-                    Loading students...
-                </td>
-
-            </tr>
-
-        </tbody>
-
-    </table>
-
-</div>
-
-
-</section>
-
-<!-- =========================
-     TEACHERS
-========================== -->
-
-<section
-    id="teachers"
-    class="section"
->
-
-
-<div class="section-header">
-
-    <div>
-
-        <h2>
-            Teachers
-        </h2>
-
-        <p>
-            Add, search and manage teachers
-        </p>
-
-    </div>
-
-    <button
-        class="primary-button"
-        onclick="openModal('teacherModal')"
-    >
-        + Add Teacher
-    </button>
-
-</div>
-
-
-<div class="search-container">
-
-    <input
-        type="search"
-        id="teacherSearch"
-        placeholder="🔍 Search teachers by name or subject..."
-        oninput="searchTeachers()"
-    >
-
-</div>
-
-
-<div class="table-container">
-
-    <table>
-
-        <thead>
-
-            <tr>
-
-                <th>ID</th>
-                <th>Name</th>
-                <th>Age</th>
-                <th>Subject</th>
-                <th>Email</th>
-                <th>Action</th>
-
-            </tr>
-
-        </thead>
-
-
-        <tbody id="teachersTable">
-
-            <tr>
-
-                <td colspan="6">
-                    Loading teachers...
-                </td>
-
-            </tr>
-
-        </tbody>
-
-    </table>
-
-</div>
-
-
-</section>
-
-<!-- =========================
-     CLASSES
-========================== -->
-
-<section
-    id="classes"
-    class="section"
->
-
-
-<div class="section-header">
-
-    <div>
-
-        <h2>
-            Classes
-        </h2>
-
-        <p>
-            Add, search and manage classes
-        </p>
-
-    </div>
-
-    <button
-        class="primary-button"
-        onclick="openModal('classModal')"
-    >
-        + Add Class
-    </button>
-
-</div>
-
-
-<div class="search-container">
-
-    <input
-        type="search"
-        id="classSearch"
-        placeholder="🔍 Search classes by name, teacher or room..."
-        oninput="searchClasses()"
-    >
-
-</div>
-
-
-<div class="table-container">
-
-    <table>
-
-        <thead>
-
-            <tr>
-
-                <th>ID</th>
-                <th>Class Name</th>
-                <th>Teacher</th>
-                <th>Room</th>
-                <th>Action</th>
-
-            </tr>
-
-        </thead>
-
-
-        <tbody id="classesTable">
-
-            <tr>
-
-                <td colspan="5">
-                    Loading classes...
-                </td>
-
-            </tr>
-
-        </tbody>
-
-    </table>
-
-</div>
-
-
-</section>
-
-</main>
-
-</div>
-
-<!-- =========================
-     STUDENT MODAL
-========================== -->
-
-<div
-    id="studentModal"
-    class="modal"
->
-
-
-<div class="modal-content">
-
-    <button
-        class="close-button"
-        onclick="closeModal('studentModal')"
-    >
-        ×
-    </button>
-
-
-    <h2 id="studentModalTitle">
-        Add Student
-    </h2>
-
-
-    <form id="studentForm">
-
-        <label for="studentName">
-            Name
-        </label>
-
-        <input
-            type="text"
-            id="studentName"
-            placeholder="Enter student name"
-            required
-        >
-
-
-        <label for="studentAge">
-            Age
-        </label>
-
-        <input
-            type="number"
-            id="studentAge"
-            placeholder="Enter age"
-            min="1"
-            required
-        >
-
-
-        <label for="studentClass">
-            Class
-        </label>
-
-        <input
-            type="text"
-            id="studentClass"
-            placeholder="e.g. SS3"
-            required
-        >
-
-
-        <button
-            type="submit"
-            class="primary-button"
-        >
-            Add Student
-        </button>
-
-    </form>
-
-</div>
-
-
-</div>
-
-<!-- =========================
-     TEACHER MODAL
-========================== -->
-
-<div
-    id="teacherModal"
-    class="modal"
->
-
-
-<div class="modal-content">
-
-    <button
-        class="close-button"
-        onclick="closeModal('teacherModal')"
-    >
-        ×
-    </button>
-
-
-    <h2 id="teacherModalTitle">
-        Add Teacher
-    </h2>
-
-
-    <form id="teacherForm">
-
-        <label for="teacherName">
-            Name
-        </label>
-
-        <input
-            type="text"
-            id="teacherName"
-            placeholder="Enter teacher name"
-            required
-        >
-
-
-        <label for="teacherAge">
-            Age
-        </label>
-
-        <input
-            type="number"
-            id="teacherAge"
-            placeholder="Enter age"
-            min="18"
-            required
-        >
-
-
-        <label for="teacherSubject">
-            Subject
-        </label>
-
-        <input
-            type="text"
-            id="teacherSubject"
-            placeholder="e.g. Mathematics"
-            required
-        >
-
-
-        <label for="teacherEmail">
-            Email
-        </label>
-
-        <input
-            type="email"
-            id="teacherEmail"
-            placeholder="teacher@example.com"
-            required
-        >
-
-
-        <button
-            type="submit"
-            class="primary-button"
-        >
-            Add Teacher
-        </button>
-
-    </form>
-
-</div>
-
-
-</div>
-
-<!-- =========================
-     CLASS MODAL
-========================== -->
-
-<div
-    id="classModal"
-    class="modal"
->
-
-
-<div class="modal-content">
-
-    <button
-        class="close-button"
-        onclick="closeModal('classModal')"
-    >
-        ×
-    </button>
-
-
-    <h2 id="classModalTitle">
-        Add Class
-    </h2>
-
-
-    <form id="classForm">
-
-        <label for="className">
-            Class Name
-        </label>
-
-        <input
-            type="text"
-            id="className"
-            placeholder="e.g. SS3"
-            required
-        >
-
-
-        <label for="classTeacher">
-            Teacher
-        </label>
-
-        <input
-            type="text"
-            id="classTeacher"
-            placeholder="Enter teacher name"
-            required
-        >
-
-
-        <label for="classRoom">
-            Room
-        </label>
-
-        <input
-            type="text"
-            id="classRoom"
-            placeholder="e.g. Room 3"
-            required
-        >
-
-
-        <button
-            type="submit"
-            class="primary-button"
-        >
-            Add Class
-        </button>
-
-    </form>
-
-</div>
-
-
-</div>
-
-<!-- =========================
-     STUDENT PROFILE MODAL
-========================== -->
-
-<div
-    id="studentProfileModal"
-    class="modal"
->
-
-
-<div class="modal-content">
-
-    <button
-        class="close-button"
-        onclick="closeModal('studentProfileModal')"
-    >
-        ×
-    </button>
-
-    <div class="student-profile">
-
-        <div
-            id="profileStudentAvatar"
-            class="student-profile-avatar"
-        >
-            S
-        </div>
-
-        <h2 id="profileStudentName">
-            Student Name
-        </h2>
-
-        <div class="student-profile-info">
-
-            <div>
-                <strong>Age:</strong>
-                <span id="profileStudentAge">
-                    -
-                </span>
             </div>
 
-            <div>
-                <strong>Class:</strong>
-                <span id="profileStudentClass">
-                    -
-                </span>
+            <div class="search-container">
+                <input
+                    type="search"
+                    id="studentSearch"
+                    placeholder="🔍 Search students by name or class..."
+                    oninput="searchStudents()"
+                >
             </div>
 
-        </div>
+            <div class="table-container">
 
-        <div class="photo-upload-box">
+                <table>
 
-            <p>
-                📷 Student Photo
-            </p>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Age</th>
+                            <th>Class</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
 
-            <input
-                type="file"
-                id="studentPhotoUpload"
-                accept="image/*"
+                    <tbody id="studentsTable">
+                        <tr>
+                            <td colspan="5">Loading students...</td>
+                        </tr>
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             TEACHERS
+        ========================== -->
+
+        <section id="teachers" class="section">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>Teachers</h2>
+                    <p>Add, search and manage teachers</p>
+                </div>
+
+                <button class="primary-button" onclick="openModal('teacherModal')">
+                    + Add Teacher
+                </button>
+
+            </div>
+
+            <div class="search-container">
+                <input
+                    type="search"
+                    id="teacherSearch"
+                    placeholder="🔍 Search teachers by name or subject..."
+                    oninput="searchTeachers()"
+                >
+            </div>
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Age</th>
+                            <th>Subject</th>
+                            <th>Email</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="teachersTable">
+                        <tr>
+                            <td colspan="6">Loading teachers...</td>
+                        </tr>
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             CLASSES
+        ========================== -->
+
+        <section id="classes" class="section">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>Classes</h2>
+                    <p>Add, search and manage classes</p>
+                </div>
+
+                <button class="primary-button" onclick="openModal('classModal')">
+                    + Add Class
+                </button>
+
+            </div>
+
+            <div class="search-container">
+                <input
+                    type="search"
+                    id="classSearch"
+                    placeholder="🔍 Search classes by name, teacher or room..."
+                    oninput="searchClasses()"
+                >
+            </div>
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Class Name</th>
+                            <th>Teacher</th>
+                            <th>Room</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="classesTable">
+                        <tr>
+                            <td colspan="5">Loading classes...</td>
+                        </tr>
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- =========================
+         STUDENT MODAL
+    ========================== -->
+
+    <div id="studentModal" class="modal">
+
+        <div class="modal-content">
+
+            <button
+                class="close-button"
+                onclick="closeModal('studentModal')"
             >
+                ×
+            </button>
 
-            <div class="photo-upload-actions">
+            <h2>Add Student</h2>
 
-                <button
-                    type="button"
-                    id="uploadStudentPhotoButton"
-                    class="upload-photo-btn"
-                    onclick="uploadStudentPhoto()"
+            <form id="studentForm">
+
+                <label for="studentName">Name</label>
+
+                <input
+                    type="text"
+                    id="studentName"
+                    placeholder="Enter student name"
+                    required
                 >
-                    📷 Upload Photo
+
+                <label for="studentAge">Age</label>
+
+                <input
+                    type="number"
+                    id="studentAge"
+                    placeholder="Enter age"
+                    min="1"
+                    required
+                >
+
+                <label for="studentClass">Class</label>
+
+                <input
+                    type="text"
+                    id="studentClass"
+                    placeholder="e.g. SS3"
+                    required
+                >
+
+                <button type="submit" class="primary-button">
+                    Add Student
                 </button>
 
-                <button
-                    type="button"
-                    class="remove-photo-btn"
-                    onclick="
-                        removeStudentPhoto(
-                            document.getElementById(
-                                'studentPhotoUpload'
-                            ).dataset.studentId
-                        )
-                    "
-                >
-                    🗑 Remove Photo
-                </button>
-
-            </div>
+            </form>
 
         </div>
 
     </div>
 
-</div>
+
+    <!-- =========================
+         TEACHER MODAL
+    ========================== -->
+
+    <div id="teacherModal" class="modal">
+
+        <div class="modal-content">
+
+            <button
+                class="close-button"
+                onclick="closeModal('teacherModal')"
+            >
+                ×
+            </button>
+
+            <h2>Add Teacher</h2>
+
+            <form id="teacherForm">
+
+                <label for="teacherName">Name</label>
+
+                <input
+                    type="text"
+                    id="teacherName"
+                    placeholder="Enter teacher name"
+                    required
+                >
+
+                <label for="teacherAge">Age</label>
+
+                <input
+                    type="number"
+                    id="teacherAge"
+                    placeholder="Enter age"
+                    min="18"
+                    required
+                >
+
+                <label for="teacherSubject">Subject</label>
+
+                <input
+                    type="text"
+                    id="teacherSubject"
+                    placeholder="e.g. Mathematics"
+                    required
+                >
+
+                <label for="teacherEmail">Email</label>
+
+                <input
+                    type="email"
+                    id="teacherEmail"
+                    placeholder="teacher@example.com"
+                    required
+                >
+
+                <button type="submit" class="primary-button">
+                    Add Teacher
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
 
 
-</div>
+    <!-- =========================
+         CLASS MODAL
+    ========================== -->
 
-<script src="script.js"></script>
+    <div id="classModal" class="modal">
+
+        <div class="modal-content">
+
+            <button
+                class="close-button"
+                onclick="closeModal('classModal')"
+            >
+                ×
+            </button>
+
+            <h2>Add Class</h2>
+
+            <form id="classForm">
+
+                <label for="className">Class Name</label>
+
+                <input
+                    type="text"
+                    id="className"
+                    placeholder="e.g. SS3"
+                    required
+                >
+
+                <label for="classTeacher">Teacher</label>
+
+                <input
+                    type="text"
+                    id="classTeacher"
+                    placeholder="Enter teacher name"
+                    required
+                >
+
+                <label for="classRoom">Room</label>
+
+                <input
+                    type="text"
+                    id="classRoom"
+                    placeholder="e.g. Room 3"
+                    required
+                >
+
+                <button type="submit" class="primary-button">
+                    Add Class
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
 
 
+    <script src="script.js"></script>
 
 </body>
 </html>

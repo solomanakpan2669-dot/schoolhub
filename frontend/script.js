@@ -1721,3 +1721,369 @@ function searchStudents() {
 
     renderStudents(filtered);
 }
+
+/* =========================================================
+   ATTENDANCE
+========================================================= */
+
+let attendanceRecords = {};
+
+function createAttendanceSection() {
+    if (document.getElementById("attendance")) return;
+
+    const nav = document.querySelector("nav");
+
+    if (nav) {
+        const button = document.createElement("button");
+        button.className = "tab-button";
+        button.textContent = "📋 Attendance";
+        button.onclick = () => showSection("attendance");
+        nav.appendChild(button);
+    }
+
+    const main = document.querySelector("main");
+
+    if (!main) return;
+
+    const section = document.createElement("section");
+
+    section.id = "attendance";
+    section.className = "section";
+    section.style.display = "none";
+
+    section.innerHTML = `
+        <div class="section-header">
+            <div>
+                <h2>Attendance</h2>
+                <p>Mark and manage student attendance</p>
+            </div>
+        </div>
+
+        <div style="
+            display:flex;
+            gap:12px;
+            align-items:center;
+            flex-wrap:wrap;
+            margin:20px 0;
+        ">
+            <label>
+                <strong>Date:</strong>
+            </label>
+
+            <input
+                type="date"
+                id="attendanceDate"
+                style="
+                    padding:10px;
+                    border:1px solid #d1d5db;
+                    border-radius:8px;
+                "
+            >
+
+            <button
+                type="button"
+                class="primary-button"
+                onclick="loadAttendance()">
+                Load Attendance
+            </button>
+        </div>
+
+        <div id="attendanceSummary" style="
+            margin-bottom:15px;
+            font-weight:600;
+        "></div>
+
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Class</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody id="attendanceTable">
+                    <tr>
+                        <td colspan="3">
+                            Select a date and load attendance.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div style="margin-top:20px;">
+            <button
+                type="button"
+                class="primary-button"
+                onclick="saveAttendance()">
+                💾 Save Attendance
+            </button>
+        </div>
+    `;
+
+    main.appendChild(section);
+
+    const dateInput =
+        document.getElementById("attendanceDate");
+
+    if (dateInput) {
+        dateInput.value =
+            new Date().toISOString().slice(0, 10);
+    }
+}
+
+async function loadAttendance() {
+    const dateInput =
+        document.getElementById("attendanceDate");
+
+    const table =
+        document.getElementById("attendanceTable");
+
+    if (!dateInput || !table) return;
+
+    const date = dateInput.value;
+
+    if (!date) {
+        alert("Please select a date.");
+        return;
+    }
+
+    try {
+        if (!allStudents.length) {
+            await loadStudents();
+        }
+
+        const data = await getJSON(
+            API_URL +
+            "/attendance?date=" +
+            encodeURIComponent(date)
+        );
+
+        attendanceRecords = {};
+
+        data.forEach(record => {
+            attendanceRecords[Number(record.studentId)] =
+                record.status;
+        });
+
+        renderAttendance();
+
+    } catch (error) {
+        console.error(
+            "LOAD ATTENDANCE ERROR:",
+            error
+        );
+
+        table.innerHTML = `
+            <tr>
+                <td colspan="3">
+                    Failed to load attendance.
+                </td>
+            </tr>
+        `;
+    }
+}
+
+function renderAttendance() {
+    const table =
+        document.getElementById("attendanceTable");
+
+    const summary =
+        document.getElementById("attendanceSummary");
+
+    if (!table) return;
+
+    if (!allStudents.length) {
+        table.innerHTML = `
+            <tr>
+                <td colspan="3">
+                    No students found.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+    table.innerHTML = allStudents.map(student => {
+        const id = Number(student.id);
+
+        const status =
+            attendanceRecords[id] || "Present";
+
+        const photo = student.photo
+            ? `<img
+                src="${escapeHTML(student.photo)}"
+                style="
+                    width:38px;
+                    height:38px;
+                    border-radius:50%;
+                    object-fit:cover;
+                "
+              >`
+            : `<div style="
+                    width:38px;
+                    height:38px;
+                    border-radius:50%;
+                    display:inline-flex;
+                    align-items:center;
+                    justify-content:center;
+                    background:linear-gradient(135deg,#2563eb,#7c3aed);
+                    color:white;
+                    font-weight:700;
+                ">
+                    ${escapeHTML(
+                        (student.name || "S")
+                            .charAt(0)
+                            .toUpperCase()
+                    )}
+                </div>`;
+
+        return `
+            <tr>
+                <td>
+                    <div style="
+                        display:flex;
+                        align-items:center;
+                        gap:10px;
+                    ">
+                        ${photo}
+                        <strong>
+                            ${escapeHTML(student.name)}
+                        </strong>
+                    </div>
+                </td>
+
+                <td>
+                    ${escapeHTML(student.className)}
+                </td>
+
+                <td>
+                    <select
+                        onchange="setAttendanceStatus(
+                            ${id},
+                            this.value
+                        )"
+                        style="
+                            padding:8px;
+                            border-radius:8px;
+                            border:1px solid #d1d5db;
+                        "
+                    >
+                        <option
+                            value="Present"
+                            ${status === "Present" ? "selected" : ""}
+                        >
+                            Present
+                        </option>
+
+                        <option
+                            value="Absent"
+                            ${status === "Absent" ? "selected" : ""}
+                        >
+                            Absent
+                        </option>
+
+                        <option
+                            value="Late"
+                            ${status === "Late" ? "selected" : ""}
+                        >
+                            Late
+                        </option>
+                    </select>
+                </td>
+            </tr>
+        `;
+    }).join("");
+
+    updateAttendanceSummary();
+}
+
+function setAttendanceStatus(studentId, status) {
+    attendanceRecords[Number(studentId)] = status;
+    updateAttendanceSummary();
+}
+
+function updateAttendanceSummary() {
+    const summary =
+        document.getElementById("attendanceSummary");
+
+    if (!summary) return;
+
+    let present = 0;
+    let absent = 0;
+    let late = 0;
+
+    allStudents.forEach(student => {
+        const status =
+            attendanceRecords[Number(student.id)] ||
+            "Present";
+
+        if (status === "Present") present++;
+        if (status === "Absent") absent++;
+        if (status === "Late") late++;
+    });
+
+    summary.textContent =
+        `Present: ${present} | Absent: ${absent} | Late: ${late}`;
+}
+
+async function saveAttendance() {
+    const dateInput =
+        document.getElementById("attendanceDate");
+
+    if (!dateInput || !dateInput.value) {
+        alert("Please select a date.");
+        return;
+    }
+
+    const records = allStudents.map(student => ({
+        studentId: Number(student.id),
+        status:
+            attendanceRecords[Number(student.id)] ||
+            "Present"
+    }));
+
+    try {
+        await getJSON(
+            API_URL + "/attendance",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    date: dateInput.value,
+                    records
+                })
+            }
+        );
+
+        alert("Attendance saved successfully!");
+
+        await loadAttendance();
+
+    } catch (error) {
+        console.error(
+            "SAVE ATTENDANCE ERROR:",
+            error
+        );
+
+        alert(error.message);
+    }
+}
+
+window.createAttendanceSection =
+    createAttendanceSection;
+
+window.loadAttendance =
+    loadAttendance;
+
+window.saveAttendance =
+    saveAttendance;
+
+window.setAttendanceStatus =
+    setAttendanceStatus;
+
