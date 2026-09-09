@@ -143,59 +143,44 @@ function renderStudents(list = students) {
 
     table.innerHTML = list.map(student => `
         <tr>
+            <td>${escapeHTML(student.id)}</td>
 
             <td>
-                ${escapeHTML(student.id)}
-            </td>
-
-            <td>
-                <div
-                    class="student-name-cell"
-                    onclick="viewStudent(${Number(student.id)})"
-                    style="cursor:pointer;"
-                >
+                <div class="student-name-cell">
                     ${studentAvatar(student)}
-                    <span>
-                        ${escapeHTML(student.name || "Unnamed")}
-                    </span>
+                    <span>${escapeHTML(student.name || "Unnamed")}</span>
                 </div>
             </td>
 
-            <td>
-                ${escapeHTML(student.age)}
-            </td>
+            <td>${escapeHTML(student.age)}</td>
 
-            <td>
-                ${escapeHTML(student.className)}
-            </td>
+            <td>${escapeHTML(student.className)}</td>
 
             <td>
                 <button
+                    type="button"
                     class="view-btn"
-                    onclick="viewStudent(${Number(student.id)})"
-                >
+                    onclick="viewStudent(${Number(student.id)})">
                     View
                 </button>
 
                 <button
+                    type="button"
                     class="edit-btn"
-                    onclick="editStudent(${Number(student.id)})"
-                >
+                    onclick="editStudent(${Number(student.id)})">
                     Edit
                 </button>
 
                 <button
+                    type="button"
                     class="delete-btn"
-                    onclick="deleteStudent(${Number(student.id)})"
-                >
+                    onclick="deleteStudent(${Number(student.id)})">
                     Delete
                 </button>
             </td>
-
         </tr>
     `).join("");
 }
-
 
 function searchStudents() {
 
@@ -1706,3 +1691,22 @@ console.log(
     "Login and registration are disabled."
 );
 
+
+
+const viewButtonStyle = document.createElement("style");
+viewButtonStyle.textContent = `
+    .view-btn {
+        border: none;
+        padding: 7px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        background: #2563eb;
+        color: white;
+        margin-right: 5px;
+    }
+
+    .view-btn:hover {
+        opacity: 0.85;
+    }
+`;
+document.head.appendChild(viewButtonStyle);
