@@ -116,18 +116,6 @@ router.post("/", (req, res) => {
             });
         }
 
-        const school = db.prepare(`
-            SELECT id
-            FROM schools
-            WHERE id = ?
-        `).get(schoolId);
-
-        if (!school) {
-            return res.status(400).json({
-                error: "School account not found"
-            });
-        }
-
         const result = db.prepare(`
             INSERT INTO students
             (schoolId, name, age, className)
