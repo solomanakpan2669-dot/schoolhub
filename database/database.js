@@ -85,6 +85,19 @@ db.exec(`
     )
 `);
 
+
+// Create a default school automatically because SchoolConnect no longer uses login/registration.
+try {
+    db.prepare(`
+        INSERT OR IGNORE INTO schools (id, name, code, password)
+        VALUES (1, 'SchoolConnect', 'DEFAULT-SCHOOL', '')
+    `).run();
+
+    console.log("Default SchoolConnect school is ready.");
+} catch (error) {
+    console.error("DEFAULT SCHOOL ERROR:", error);
+}
+
 module.exports = db;
 
 
