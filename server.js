@@ -6,6 +6,7 @@ const studentsRouter = require("./routes/students");
 const teachersRouter = require("./routes/teachers");
 const classesRouter = require("./routes/classes");
 const schoolsRouter = require("./routes/schools");
+const attendanceRouter = require("./routes/attendance");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,7 +21,7 @@ app.use(express.json({ limit: "4mb" }));
 app.use("/api/schools", schoolsRouter);
 
 // ======================================================
-// PROTECTED SCHOOL DATA ROUTES
+// SCHOOL DATA ROUTES
 // ======================================================
 
 app.use("/api/students", studentsRouter);
@@ -28,6 +29,8 @@ app.use("/api/students", studentsRouter);
 app.use("/api/teachers", teachersRouter);
 
 app.use("/api/classes", classesRouter);
+
+app.use("/api/attendance", attendanceRouter);
 
 // ======================================================
 // FRONTEND
