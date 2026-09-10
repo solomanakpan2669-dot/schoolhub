@@ -1,17 +1,33 @@
+/* =========================================================
+   SCHOOL MANAGEMENT SYSTEM
+   COMPLETE FRONTEND SCRIPT
+========================================================= */
+
 const API_URL =
     window.location.port === "5500"
         ? "http://localhost:3000/api"
         : "/api";
 
+
+/* =========================================================
+   GLOBAL DATA
+========================================================= */
+
 let students = [];
 let teachers = [];
 let classes = [];
+
+let allStudents = [];
+let allTeachers = [];
+let allClasses = [];
 
 let editingStudentId = null;
 let editingTeacherId = null;
 let editingClassId = null;
 
 let currentProfileStudent = null;
+
+let attendanceRecords = {};
 
 
 /* =========================================================
@@ -21,6 +37,7 @@ let currentProfileStudent = null;
 function getElement(id) {
     return document.getElementById(id);
 }
+
 
 function escapeHTML(value) {
     return String(value ?? "")
@@ -33,6 +50,7 @@ function escapeHTML(value) {
 
 
 async function getJSON(url, options = {}) {
+
     const response = await fetch(url, {
         ...options,
         headers: {
@@ -50,6 +68,7 @@ async function getJSON(url, options = {}) {
     }
 
     if (!response.ok) {
+
         throw new Error(
             data.error ||
             data.message ||
@@ -62,57 +81,13 @@ async function getJSON(url, options = {}) {
 
 
 /* =========================================================
-   STUDENTS
+   STUDENT AVATAR
 ========================================================= */
-
-async function loadStudents() {
-    const table = getElement("studentsTable");
-
-    if (table) {
-        table.innerHTML =
-            '<tr><td colspan="5">Loading students...</td></tr>';
-    }
-
-    try {
-        const data = await getJSON(`${API_URL}/students`);
-
-        students = Array.isArray(data)
-            ? data
-            : Array.isArray(data.students)
-                ? data.students
-                : [];
-
-        renderStudents();
-        updateStudentCount();
-
-    } catch (error) {
-
-        console.error("LOAD STUDENTS ERROR:", error);
-
-        students = [];
-
-        if (table) {
-            table.innerHTML =
-                `<tr><td colspan="5">${escapeHTML(error.message)}</td></tr>`;
-        }
-
-        updateStudentCount();
-    }
-}
-
-
-function updateStudentCount() {
-    const element = getElement("studentCount");
-
-    if (element) {
-        element.textContent = students.length;
-    }
-}
-
 
 function studentAvatar(student) {
 
     if (student.photo) {
+
         return `
             <img
                 src="${escapeHTML(student.photo)}"
@@ -125,82 +100,212 @@ function studentAvatar(student) {
     return `
         <div class="student-table-avatar">
             ${escapeHTML(
-                (student.name || "S").charAt(0).toUpperCase()
+                (student.name || "S")
+                    .charAt(0)
+                    .toUpperCase()
             )}
         </div>
     `;
 }
 
 
-function renderStudents(list = students) {
+/* =========================================================
+   STUDENTS
+========================================================= */
+
+async function loadStudents() {
 
     const table = getElement("studentsTable");
+
+    if (table) {
+
+        table.innerHTML =
+            '<tr><td colspan="5">Loading students...</td></tr>';
+    }
+
+    try {
+
+        const data =
+            await getJSON(`${API_URL}/students`);
+
+        students =
+            Array.isArray(data)
+                ? data
+                : Array.isArray(data.students)
+                    ? data.students
+                    : [];
+
+        allStudents = students;
+
+        renderStudents();
+
+        updateStudentCount();
+
+    } catch (error) {
+
+        console.error(
+            "LOAD STUDENTS ERROR:",
+            error
+        );
+
+        students = [];
+        allStudents = [];
+
+        if (table) {
+
+            table.innerHTML = `
+                <tr>
+                    <td colspan="5">
+                        ${escapeHTML(error.message)}
+                    </td>
+                </tr>
+            `;
+        }
+
+        updateStudentCount();
+    }
+}
+
+
+function updateStudentCount() {
+
+    const element =
+        getElement("studentCount");
+
+    if (element) {
+        element.textContent =
+            students.length;
+    }
+}
+
+
+function renderStudents(list = students) {
+
+    const table =
+        getElement("studentsTable");
 
     if (!table) return;
 
     if (!list.length) {
+
         table.innerHTML =
             '<tr><td colspan="5">No students found.</td></tr>';
+
         return;
     }
 
-    table.innerHTML = list.map(student => `
-        <tr>
-            <td>${escapeHTML(student.id)}</td>
+    table.innerHTML =
+        list.map(student => `
 
-            <td>
-                <div class="student-name-cell">
-                    ${studentAvatar(student)}
-                    <span>${escapeHTML(student.name || "Unnamed")}</span>
-                </div>
-            </td>
+            <tr>
 
-            <td>${escapeHTML(student.age)}</td>
+                <td>
+                    ${escapeHTML(student.id)}
+                </td>
 
-            <td>${escapeHTML(student.className)}</td>
+                <td>
+                    <div class="student-name-cell">
 
-            <td>
-                <button
-                    type="button"
-                    class="view-btn"
-                    onclick="viewStudent(${Number(student.id)})">
-                    View
-                </button>
+                        ${studentAvatar(student)}
 
-                <button
-                    type="button"
-                    class="edit-btn"
-                    onclick="editStudent(${Number(student.id)})">
-                    Edit
-                </button>
+                        <span>
+                            ${escapeHTML(
+                                student.name ||
+                                "Unnamed"
+                            )}
+                        </span>
 
-                <button
-                    type="button"
-                    class="delete-btn"
-                    onclick="deleteStudent(${Number(student.id)})">
-                    Delete
-                </button>
-            </td>
-        </tr>
-    `).join("");
+                    </div>
+                </td>
+
+                <td>
+                    ${escapeHTML(student.age)}
+                </td>
+
+                <td>
+                    ${escapeHTML(student.className)}
+                </td>
+
+                <td>
+
+                    <button
+                        type="button"
+                        class="view-btn"
+                        onclick="viewStudent(${Number(student.id)})"
+                    >
+                        View
+                    </button>
+
+                    <button
+                        type="button"
+                        class="edit-btn"
+                        onclick="editStudent(${Number(student.id)})"
+                    >
+                        Edit
+                    </button>
+
+                    <button
+                        type="button"
+                        class="delete-btn"
+                        onclick="deleteStudent(${Number(student.id)})"
+                    >
+                        Delete
+                    </button>
+
+                </td>
+
+            </tr>
+
+        `).join("");
 }
 
+
 function searchStudents() {
-    const input = document.getElementById("studentSearch");
+
+    const input =
+        getElement("studentSearch");
 
     if (!input) return;
 
-    const query = input.value.trim().toLowerCase();
+    const query =
+        input.value
+            .trim()
+            .toLowerCase();
 
-    const filtered = students.filter(student => {
-        const name = String(student.name || "").toLowerCase();
+    const filtered =
+        students.filter(student => {
 
-        return name.includes(query);
-    });
+            const id =
+                String(student.id ?? "")
+                    .toLowerCase();
+
+            const name =
+                String(student.name ?? "")
+                    .toLowerCase();
+
+            const age =
+                String(student.age ?? "")
+                    .toLowerCase();
+
+            const className =
+                String(student.className ?? "")
+                    .toLowerCase();
+
+            return (
+                id.includes(query) ||
+                name.includes(query) ||
+                age.includes(query) ||
+                className.includes(query)
+            );
+        });
 
     renderStudents(filtered);
 }
 
+
+/* =========================================================
+   ADD / EDIT STUDENT
+========================================================= */
 
 async function addStudent(event) {
 
@@ -209,29 +314,46 @@ async function addStudent(event) {
     }
 
     const name =
-        getElement("studentName")?.value.trim() || "";
+        getElement("studentName")
+            ?.value
+            .trim() || "";
 
     const age =
-        Number(getElement("studentAge")?.value);
+        Number(
+            getElement("studentAge")
+                ?.value
+        );
 
     const className =
-        getElement("studentClass")?.value.trim() || "";
+        getElement("studentClass")
+            ?.value
+            .trim() || "";
 
     if (!name || !age || !className) {
-        alert("Please fill in all student fields.");
+
+        alert(
+            "Please fill in all student fields."
+        );
+
         return;
     }
 
     try {
 
-        const editing = editingStudentId !== null;
+        const editing =
+            editingStudentId !== null;
 
-        const url = editing
-            ? `${API_URL}/students/${editingStudentId}`
-            : `${API_URL}/students`;
+        const url =
+            editing
+                ? `${API_URL}/students/${editingStudentId}`
+                : `${API_URL}/students`;
 
         await getJSON(url, {
-            method: editing ? "PUT" : "POST",
+
+            method:
+                editing
+                    ? "PUT"
+                    : "POST",
 
             body: JSON.stringify({
                 name,
@@ -250,13 +372,24 @@ async function addStudent(event) {
 
         getElement("studentForm")?.reset();
 
+        const title =
+            getElement("studentModalTitle");
+
+        if (title) {
+            title.textContent =
+                "Add Student";
+        }
+
         closeModal("studentModal");
 
         await loadStudents();
 
     } catch (error) {
 
-        console.error("STUDENT ERROR:", error);
+        console.error(
+            "STUDENT ERROR:",
+            error
+        );
 
         alert(error.message);
     }
@@ -265,29 +398,55 @@ async function addStudent(event) {
 
 function editStudent(id) {
 
-    const student = students.find(
-        item => Number(item.id) === Number(id)
-    );
+    const student =
+        students.find(
+            item =>
+                Number(item.id) ===
+                Number(id)
+        );
 
     if (!student) {
-        alert("Student not found.");
+
+        alert(
+            "Student not found."
+        );
+
         return;
     }
 
-    editingStudentId = Number(id);
+    editingStudentId =
+        Number(id);
 
-    const name = getElement("studentName");
-    const age = getElement("studentAge");
-    const className = getElement("studentClass");
+    const name =
+        getElement("studentName");
 
-    if (name) name.value = student.name || "";
-    if (age) age.value = student.age || "";
-    if (className) className.value = student.className || "";
+    const age =
+        getElement("studentAge");
 
-    const title = getElement("studentModalTitle");
+    const className =
+        getElement("studentClass");
+
+    if (name) {
+        name.value =
+            student.name || "";
+    }
+
+    if (age) {
+        age.value =
+            student.age || "";
+    }
+
+    if (className) {
+        className.value =
+            student.className || "";
+    }
+
+    const title =
+        getElement("studentModalTitle");
 
     if (title) {
-        title.textContent = "Edit Student";
+        title.textContent =
+            "Edit Student";
     }
 
     openModal("studentModal");
@@ -296,13 +455,21 @@ function editStudent(id) {
 
 async function deleteStudent(id) {
 
-    const student = students.find(
-        item => Number(item.id) === Number(id)
-    );
+    const student =
+        students.find(
+            item =>
+                Number(item.id) ===
+                Number(id)
+        );
 
-    if (!confirm(
-        `Delete ${student?.name || "this student"}?`
-    )) {
+    if (
+        !confirm(
+            `Delete ${
+                student?.name ||
+                "this student"
+            }?`
+        )
+    ) {
         return;
     }
 
@@ -315,13 +482,18 @@ async function deleteStudent(id) {
             }
         );
 
-        alert("Student deleted successfully.");
+        alert(
+            "Student deleted successfully."
+        );
 
         await loadStudents();
 
     } catch (error) {
 
-        console.error("DELETE STUDENT ERROR:", error);
+        console.error(
+            "DELETE STUDENT ERROR:",
+            error
+        );
 
         alert(error.message);
     }
@@ -329,197 +501,591 @@ async function deleteStudent(id) {
 
 
 /* =========================================================
-   STUDENT PROFILE / PHOTO
+   STUDENT PROFILE
+   THIS VERSION CREATES THE MODAL AUTOMATICALLY
 ========================================================= */
+
+function createStudentProfileModal() {
+
+    let modal =
+        getElement("studentProfileModal");
+
+    if (modal) {
+        return modal;
+    }
+
+    modal =
+        document.createElement("div");
+
+    modal.id =
+        "studentProfileModal";
+
+    modal.className =
+        "modal";
+
+    modal.style.display =
+        "none";
+
+    modal.innerHTML = `
+
+        <div
+            class="modal-content student-profile-modal-content"
+            style="
+                position:relative;
+                max-width:500px;
+                width:90%;
+                background:white;
+                border-radius:16px;
+                padding:30px;
+                box-shadow:0 20px 50px rgba(0,0,0,0.25);
+            "
+        >
+
+            <button
+                type="button"
+                class="close-button"
+                onclick="closeModal('studentProfileModal')"
+                style="
+                    position:absolute;
+                    right:15px;
+                    top:10px;
+                    border:none;
+                    background:none;
+                    font-size:30px;
+                    cursor:pointer;
+                "
+            >
+                ×
+            </button>
+
+
+            <div
+                style="
+                    text-align:center;
+                    margin-bottom:25px;
+                "
+            >
+
+                <div
+                    id="profileStudentAvatar"
+                    style="
+                        width:110px;
+                        height:110px;
+                        margin:0 auto 15px;
+                        border-radius:50%;
+                        overflow:hidden;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        background:#2563eb;
+                        color:white;
+                        font-size:42px;
+                        font-weight:bold;
+                    "
+                >
+                </div>
+
+                <h2
+                    id="profileStudentName"
+                    style="margin:5px 0;"
+                >
+                    Student
+                </h2>
+
+                <p
+                    style="
+                        margin:5px 0;
+                        color:#6b7280;
+                    "
+                >
+                    Student Profile
+                </p>
+
+            </div>
+
+
+            <div
+                style="
+                    display:grid;
+                    gap:12px;
+                    margin-bottom:20px;
+                "
+            >
+
+                <div
+                    style="
+                        padding:14px;
+                        background:#f3f4f6;
+                        border-radius:10px;
+                    "
+                >
+                    <strong>Student ID:</strong>
+
+                    <span
+                        id="profileStudentId"
+                    >
+                        -
+                    </span>
+                </div>
+
+
+                <div
+                    style="
+                        padding:14px;
+                        background:#f3f4f6;
+                        border-radius:10px;
+                    "
+                >
+                    <strong>Age:</strong>
+
+                    <span
+                        id="profileStudentAge"
+                    >
+                        -
+                    </span>
+                </div>
+
+
+                <div
+                    style="
+                        padding:14px;
+                        background:#f3f4f6;
+                        border-radius:10px;
+                    "
+                >
+                    <strong>Class:</strong>
+
+                    <span
+                        id="profileStudentClass"
+                    >
+                        -
+                    </span>
+                </div>
+
+            </div>
+
+
+            <input
+                type="file"
+                id="studentPhotoUpload"
+                accept="image/*"
+                style="display:none;"
+            >
+
+
+            <div
+                style="
+                    display:flex;
+                    flex-wrap:wrap;
+                    gap:10px;
+                    justify-content:center;
+                "
+            >
+
+                <button
+                    type="button"
+                    class="primary-button"
+                    onclick="chooseStudentPhoto()"
+                >
+                    📷 Change Photo
+                </button>
+
+                <button
+                    type="button"
+                    class="delete-btn"
+                    onclick="removeStudentPhoto()"
+                >
+                    🗑 Remove Photo
+                </button>
+
+                <button
+                    type="button"
+                    class="edit-btn"
+                    onclick="
+                        closeModal('studentProfileModal');
+                        if (currentProfileStudent) {
+                            editStudent(currentProfileStudent.id);
+                        }
+                    "
+                >
+                    ✏️ Edit Student
+                </button>
+
+                <button
+                    type="button"
+                    class="view-btn"
+                    onclick="closeModal('studentProfileModal')"
+                >
+                    Close
+                </button>
+
+            </div>
+
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    return modal;
+}
+
 
 function viewStudent(id) {
 
-    const student = students.find(
-        item => Number(item.id) === Number(id)
-    );
+    const student =
+        students.find(
+            item =>
+                Number(item.id) ===
+                Number(id)
+        );
 
     if (!student) {
-        alert("Student not found.");
+
+        alert(
+            "Student not found."
+        );
+
         return;
     }
 
-    const modal = getElement("studentProfileModal");
+
+    /*
+       IMPORTANT:
+       Automatically create the profile window
+       if the HTML does not contain it.
+    */
+
+    const modal =
+        createStudentProfileModal();
 
     if (!modal) {
-        alert("Student profile window is not available.");
+
+        alert(
+            "Could not create student profile window."
+        );
+
         return;
     }
 
-    currentProfileStudent = student;
 
-    const name = getElement("profileStudentName");
-    const age = getElement("profileStudentAge");
-    const className = getElement("profileStudentClass");
-    const avatar = getElement("profileStudentAvatar");
+    currentProfileStudent =
+        student;
+
+
+    const name =
+        getElement("profileStudentName");
+
+    const studentId =
+        getElement("profileStudentId");
+
+    const age =
+        getElement("profileStudentAge");
+
+    const className =
+        getElement("profileStudentClass");
+
+    const avatar =
+        getElement("profileStudentAvatar");
+
 
     if (name) {
+
         name.textContent =
-            student.name || "Unnamed Student";
+            student.name ||
+            "Unnamed Student";
     }
+
+
+    if (studentId) {
+
+        studentId.textContent =
+            student.id ??
+            "-";
+    }
+
 
     if (age) {
+
         age.textContent =
-            student.age ?? "-";
+            student.age ??
+            "-";
     }
 
+
     if (className) {
+
         className.textContent =
-            student.className || "-";
+            student.className ||
+            "-";
     }
+
 
     if (avatar) {
 
-        avatar.innerHTML = student.photo
+        if (student.photo) {
 
-            ? `
+            avatar.innerHTML = `
+
                 <img
                     src="${escapeHTML(student.photo)}"
                     class="student-profile-photo"
                     alt="Student photo"
+                    style="
+                        width:100%;
+                        height:100%;
+                        object-fit:cover;
+                    "
                 >
-            `
 
-            : `
-                <div class="student-profile-initial">
+            `;
+
+        } else {
+
+            avatar.innerHTML = `
+
+                <div
+                    class="student-profile-initial"
+                    style="
+                        width:100%;
+                        height:100%;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        background:linear-gradient(
+                            135deg,
+                            #2563eb,
+                            #7c3aed
+                        );
+                        color:white;
+                        font-size:42px;
+                        font-weight:bold;
+                    "
+                >
                     ${escapeHTML(
-                        (student.name || "S")
-                            .charAt(0)
-                            .toUpperCase()
+                        (
+                            student.name ||
+                            "S"
+                        )
+                        .charAt(0)
+                        .toUpperCase()
                     )}
                 </div>
+
             `;
+        }
     }
+
 
     const upload =
-        getElement("studentPhotoUpload");
+        getElement(
+            "studentPhotoUpload"
+        );
 
     if (upload) {
-        upload.dataset.studentId = student.id;
-        upload.value = "";
+
+        upload.dataset.studentId =
+            student.id;
+
+        upload.value =
+            "";
     }
 
-    openModal("studentProfileModal");
+
+    openModal(
+        "studentProfileModal"
+    );
 }
 
 
+/* =========================================================
+   STUDENT PHOTO
+========================================================= */
+
 function chooseStudentPhoto() {
 
-    getElement("studentPhotoUpload")?.click();
+    const input =
+        getElement(
+            "studentPhotoUpload"
+        );
+
+    if (input) {
+        input.click();
+    }
 }
 
 
 function compressStudentPhoto(file) {
 
-    return new Promise((resolve, reject) => {
+    return new Promise(
+        (resolve, reject) => {
 
-        const reader = new FileReader();
+            const reader =
+                new FileReader();
 
-        reader.onload = event => {
+            reader.onload =
+                event => {
 
-            const image = new Image();
+                    const image =
+                        new Image();
 
-            image.onload = () => {
+                    image.onload =
+                        () => {
 
-                const maxSize = 600;
+                            const maxSize =
+                                600;
 
-                let width = image.width;
-                let height = image.height;
+                            let width =
+                                image.width;
 
-                if (
-                    width > maxSize ||
-                    height > maxSize
-                ) {
+                            let height =
+                                image.height;
 
-                    const scale =
-                        Math.min(
-                            maxSize / width,
-                            maxSize / height
-                        );
 
-                    width =
-                        Math.round(width * scale);
+                            if (
+                                width > maxSize ||
+                                height > maxSize
+                            ) {
 
-                    height =
-                        Math.round(height * scale);
-                }
+                                const scale =
+                                    Math.min(
+                                        maxSize / width,
+                                        maxSize / height
+                                    );
 
-                const canvas =
-                    document.createElement("canvas");
+                                width =
+                                    Math.round(
+                                        width * scale
+                                    );
 
-                canvas.width = width;
-                canvas.height = height;
+                                height =
+                                    Math.round(
+                                        height * scale
+                                    );
+                            }
 
-                const context =
-                    canvas.getContext("2d");
 
-                context.drawImage(
-                    image,
-                    0,
-                    0,
-                    width,
-                    height
-                );
+                            const canvas =
+                                document.createElement(
+                                    "canvas"
+                                );
 
-                resolve(
-                    canvas.toDataURL(
-                        "image/jpeg",
-                        0.8
-                    )
-                );
-            };
+                            canvas.width =
+                                width;
 
-            image.onerror = () =>
-                reject(
-                    new Error("Could not read the image.")
-                );
+                            canvas.height =
+                                height;
 
-            image.src = event.target.result;
-        };
 
-        reader.onerror = () =>
-            reject(
-                new Error("Could not read the selected file.")
-            );
+                            const context =
+                                canvas.getContext(
+                                    "2d"
+                                );
 
-        reader.readAsDataURL(file);
-    });
+                            context.drawImage(
+                                image,
+                                0,
+                                0,
+                                width,
+                                height
+                            );
+
+
+                            resolve(
+                                canvas.toDataURL(
+                                    "image/jpeg",
+                                    0.8
+                                )
+                            );
+                        };
+
+
+                    image.onerror =
+                        () => {
+
+                            reject(
+                                new Error(
+                                    "Could not read the image."
+                                )
+                            );
+                        };
+
+
+                    image.src =
+                        event.target.result;
+                };
+
+
+            reader.onerror =
+                () => {
+
+                    reject(
+                        new Error(
+                            "Could not read the selected file."
+                        )
+                    );
+                };
+
+
+            reader.readAsDataURL(file);
+        }
+    );
 }
 
 
 async function uploadStudentPhoto() {
 
     const input =
-        getElement("studentPhotoUpload");
+        getElement(
+            "studentPhotoUpload"
+        );
 
-    if (!input?.files?.[0]) {
+    if (
+        !input ||
+        !input.files ||
+        !input.files[0]
+    ) {
         return;
     }
+
 
     const id =
         input.dataset.studentId ||
         currentProfileStudent?.id;
 
+
     if (!id) {
-        alert("Please open a student profile first.");
+
+        alert(
+            "Please open a student profile first."
+        );
+
         return;
     }
 
-    if (!input.files[0].type.startsWith("image/")) {
-        alert("Please select an image file.");
+
+    const file =
+        input.files[0];
+
+
+    if (
+        !file.type.startsWith("image/")
+    ) {
+
+        alert(
+            "Please select an image file."
+        );
+
         return;
     }
+
 
     try {
 
         const photo =
             await compressStudentPhoto(
-                input.files[0]
+                file
             );
+
 
         const data =
             await getJSON(
@@ -533,15 +1099,26 @@ async function uploadStudentPhoto() {
                 }
             );
 
+
         const student =
             students.find(
-                item => Number(item.id) === Number(id)
+                item =>
+                    Number(item.id) ===
+                    Number(id)
             );
 
+
         if (student) {
+
             student.photo =
-                data.photo || photo;
+                data.photo ||
+                photo;
         }
+
+
+        allStudents =
+            students;
+
 
         renderStudents();
 
@@ -549,7 +1126,10 @@ async function uploadStudentPhoto() {
 
     } catch (error) {
 
-        console.error("PHOTO ERROR:", error);
+        console.error(
+            "PHOTO ERROR:",
+            error
+        );
 
         alert(error.message);
     }
@@ -562,13 +1142,20 @@ async function removeStudentPhoto(id = null) {
         id ||
         currentProfileStudent?.id;
 
-    if (!id) return;
 
-    if (!confirm(
-        "Remove this student's photo?"
-    )) {
+    if (!id) {
         return;
     }
+
+
+    if (
+        !confirm(
+            "Remove this student's photo?"
+        )
+    ) {
+        return;
+    }
+
 
     try {
 
@@ -579,14 +1166,23 @@ async function removeStudentPhoto(id = null) {
             }
         );
 
+
         const student =
             students.find(
-                item => Number(item.id) === Number(id)
+                item =>
+                    Number(item.id) ===
+                    Number(id)
             );
+
 
         if (student) {
             student.photo = null;
         }
+
+
+        allStudents =
+            students;
+
 
         renderStudents();
 
@@ -614,9 +1210,11 @@ async function loadTeachers() {
         getElement("teachersTable");
 
     if (table) {
+
         table.innerHTML =
             '<tr><td colspan="6">Loading teachers...</td></tr>';
     }
+
 
     try {
 
@@ -625,12 +1223,18 @@ async function loadTeachers() {
                 `${API_URL}/teachers`
             );
 
+
         teachers =
             Array.isArray(data)
                 ? data
                 : Array.isArray(data.teachers)
                     ? data.teachers
                     : [];
+
+
+        allTeachers =
+            teachers;
+
 
         renderTeachers();
 
@@ -643,17 +1247,22 @@ async function loadTeachers() {
             error
         );
 
+
         teachers = [];
+        allTeachers = [];
+
 
         if (table) {
 
-            table.innerHTML =
-                `<tr>
+            table.innerHTML = `
+                <tr>
                     <td colspan="6">
                         ${escapeHTML(error.message)}
                     </td>
-                </tr>`;
+                </tr>
+            `;
         }
+
 
         updateTeacherCount();
     }
@@ -666,6 +1275,7 @@ function updateTeacherCount() {
         getElement("teacherCount");
 
     if (element) {
+
         element.textContent =
             teachers.length;
     }
@@ -679,6 +1289,7 @@ function renderTeachers(list = teachers) {
 
     if (!table) return;
 
+
     if (!list.length) {
 
         table.innerHTML =
@@ -686,6 +1297,7 @@ function renderTeachers(list = teachers) {
 
         return;
     }
+
 
     table.innerHTML =
         list.map(teacher => `
@@ -697,24 +1309,33 @@ function renderTeachers(list = teachers) {
                 </td>
 
                 <td>
-                    ${escapeHTML(teacher.name)}
+                    ${escapeHTML(
+                        teacher.name
+                    )}
                 </td>
 
                 <td>
-                    ${escapeHTML(teacher.age)}
+                    ${escapeHTML(
+                        teacher.age
+                    )}
                 </td>
 
                 <td>
-                    ${escapeHTML(teacher.subject)}
+                    ${escapeHTML(
+                        teacher.subject
+                    )}
                 </td>
 
                 <td>
-                    ${escapeHTML(teacher.email)}
+                    ${escapeHTML(
+                        teacher.email
+                    )}
                 </td>
 
                 <td>
 
                     <button
+                        type="button"
                         class="view-btn"
                         onclick="viewTeacher(${Number(teacher.id)})"
                     >
@@ -722,6 +1343,7 @@ function renderTeachers(list = teachers) {
                     </button>
 
                     <button
+                        type="button"
                         class="edit-btn"
                         onclick="editTeacher(${Number(teacher.id)})"
                     >
@@ -729,6 +1351,7 @@ function renderTeachers(list = teachers) {
                     </button>
 
                     <button
+                        type="button"
                         class="delete-btn"
                         onclick="deleteTeacher(${Number(teacher.id)})"
                     >
@@ -750,28 +1373,35 @@ function searchTeachers() {
 
     if (!input) return;
 
+
     const search =
         input.value
             .trim()
             .toLowerCase();
 
+
     if (!search) {
+
         renderTeachers();
+
         return;
     }
 
+
     const filtered =
-        teachers.filter(teacher =>
-            `
-                ${teacher.id}
-                ${teacher.name}
-                ${teacher.age}
-                ${teacher.subject}
-                ${teacher.email}
-            `
-            .toLowerCase()
-            .includes(search)
+        teachers.filter(
+            teacher =>
+                `
+                    ${teacher.id}
+                    ${teacher.name}
+                    ${teacher.age}
+                    ${teacher.subject}
+                    ${teacher.email}
+                `
+                .toLowerCase()
+                .includes(search)
         );
+
 
     renderTeachers(filtered);
 }
@@ -781,16 +1411,25 @@ function editTeacher(id) {
 
     const teacher =
         teachers.find(
-            item => Number(item.id) === Number(id)
+            item =>
+                Number(item.id) ===
+                Number(id)
         );
 
+
     if (!teacher) {
-        alert("Teacher not found.");
+
+        alert(
+            "Teacher not found."
+        );
+
         return;
     }
 
+
     editingTeacherId =
         Number(id);
+
 
     const name =
         getElement("teacherName");
@@ -804,27 +1443,44 @@ function editTeacher(id) {
     const email =
         getElement("teacherEmail");
 
-    if (name) name.value =
-        teacher.name || "";
 
-    if (age) age.value =
-        teacher.age || "";
+    if (name) {
+        name.value =
+            teacher.name || "";
+    }
 
-    if (subject) subject.value =
-        teacher.subject || "";
+    if (age) {
+        age.value =
+            teacher.age || "";
+    }
 
-    if (email) email.value =
-        teacher.email || "";
+    if (subject) {
+        subject.value =
+            teacher.subject || "";
+    }
+
+    if (email) {
+        email.value =
+            teacher.email || "";
+    }
+
 
     const title =
-        getElement("teacherModalTitle");
+        getElement(
+            "teacherModalTitle"
+        );
+
 
     if (title) {
+
         title.textContent =
             "Edit Teacher";
     }
 
-    openModal("teacherModal");
+
+    openModal(
+        "teacherModal"
+    );
 }
 
 
@@ -834,10 +1490,12 @@ async function saveTeacher(event) {
         event.preventDefault();
     }
 
+
     const name =
         getElement("teacherName")
             ?.value
             .trim() || "";
+
 
     const age =
         Number(
@@ -845,15 +1503,18 @@ async function saveTeacher(event) {
                 ?.value
         );
 
+
     const subject =
         getElement("teacherSubject")
             ?.value
             .trim() || "";
 
+
     const email =
         getElement("teacherEmail")
             ?.value
             .trim() || "";
+
 
     if (
         !name ||
@@ -861,36 +1522,45 @@ async function saveTeacher(event) {
         !subject ||
         !email
     ) {
+
         alert(
             "Please fill in all teacher fields."
         );
+
         return;
     }
+
 
     try {
 
         const editing =
             editingTeacherId !== null;
 
+
         const url =
             editing
                 ? `${API_URL}/teachers/${editingTeacherId}`
                 : `${API_URL}/teachers`;
 
-        await getJSON(url, {
 
-            method:
-                editing
-                    ? "PUT"
-                    : "POST",
+        await getJSON(
+            url,
+            {
 
-            body: JSON.stringify({
-                name,
-                age,
-                subject,
-                email
-            })
-        });
+                method:
+                    editing
+                        ? "PUT"
+                        : "POST",
+
+                body: JSON.stringify({
+                    name,
+                    age,
+                    subject,
+                    email
+                })
+            }
+        );
+
 
         alert(
             editing
@@ -898,19 +1568,33 @@ async function saveTeacher(event) {
                 : "Teacher added successfully."
         );
 
-        editingTeacherId = null;
 
-        getElement("teacherForm")?.reset();
+        editingTeacherId =
+            null;
+
+
+        getElement(
+            "teacherForm"
+        )?.reset();
+
 
         const title =
-            getElement("teacherModalTitle");
+            getElement(
+                "teacherModalTitle"
+            );
+
 
         if (title) {
+
             title.textContent =
                 "Add Teacher";
         }
 
-        closeModal("teacherModal");
+
+        closeModal(
+            "teacherModal"
+        );
+
 
         await loadTeachers();
 
@@ -930,14 +1614,23 @@ async function deleteTeacher(id) {
 
     const teacher =
         teachers.find(
-            item => Number(item.id) === Number(id)
+            item =>
+                Number(item.id) ===
+                Number(id)
         );
 
-    if (!confirm(
-        `Delete ${teacher?.name || "this teacher"}?`
-    )) {
+
+    if (
+        !confirm(
+            `Delete ${
+                teacher?.name ||
+                "this teacher"
+            }?`
+        )
+    ) {
         return;
     }
+
 
     try {
 
@@ -948,9 +1641,11 @@ async function deleteTeacher(id) {
             }
         );
 
+
         alert(
             "Teacher deleted successfully."
         );
+
 
         await loadTeachers();
 
@@ -966,25 +1661,42 @@ async function deleteTeacher(id) {
 }
 
 
+/* =========================================================
+   TEACHER PROFILE
+========================================================= */
+
 function viewTeacher(id) {
 
     const teacher =
         teachers.find(
-            item => Number(item.id) === Number(id)
+            item =>
+                Number(item.id) ===
+                Number(id)
         );
 
+
     if (!teacher) {
-        alert("Teacher not found.");
+
+        alert(
+            "Teacher not found."
+        );
+
         return;
     }
 
+
     let modal =
-        getElement("teacherProfileModal");
+        getElement(
+            "teacherProfileModal"
+        );
+
 
     if (!modal) {
 
         modal =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
 
         modal.id =
             "teacherProfileModal";
@@ -994,51 +1706,91 @@ function viewTeacher(id) {
 
         modal.innerHTML = `
 
-            <div class="modal-content">
+            <div
+                class="modal-content"
+                style="
+                    position:relative;
+                    max-width:500px;
+                    width:90%;
+                    background:white;
+                    border-radius:16px;
+                    padding:30px;
+                "
+            >
 
                 <button
+                    type="button"
                     class="close-button"
-                    onclick="closeModal('teacherProfileModal')"
+                    onclick="
+                        closeModal(
+                            'teacherProfileModal'
+                        )
+                    "
                 >
                     ×
                 </button>
 
-                <h2 id="teacherProfileName"></h2>
+                <h2
+                    id="teacherProfileName"
+                ></h2>
 
                 <p>
                     <strong>Age:</strong>
-                    <span id="teacherProfileAge"></span>
+                    <span
+                        id="teacherProfileAge"
+                    ></span>
                 </p>
 
                 <p>
                     <strong>Subject:</strong>
-                    <span id="teacherProfileSubject"></span>
+                    <span
+                        id="teacherProfileSubject"
+                    ></span>
                 </p>
 
                 <p>
                     <strong>Email:</strong>
-                    <span id="teacherProfileEmail"></span>
+                    <span
+                        id="teacherProfileEmail"
+                    ></span>
                 </p>
 
             </div>
         `;
 
-        document.body.appendChild(modal);
+        document.body.appendChild(
+            modal
+        );
     }
 
-    getElement("teacherProfileName").textContent =
+
+    getElement(
+        "teacherProfileName"
+    ).textContent =
         teacher.name || "";
 
-    getElement("teacherProfileAge").textContent =
+
+    getElement(
+        "teacherProfileAge"
+    ).textContent =
         teacher.age ?? "-";
 
-    getElement("teacherProfileSubject").textContent =
+
+    getElement(
+        "teacherProfileSubject"
+    ).textContent =
         teacher.subject || "-";
 
-    getElement("teacherProfileEmail").textContent =
+
+    getElement(
+        "teacherProfileEmail"
+    ).textContent =
         teacher.email || "-";
 
-    openModal("teacherProfileModal");
+
+    openModal(
+        "teacherProfileModal"
+    );
 }
 
 
@@ -1051,10 +1803,13 @@ async function loadClasses() {
     const table =
         getElement("classesTable");
 
+
     if (table) {
+
         table.innerHTML =
             '<tr><td colspan="5">Loading classes...</td></tr>';
     }
+
 
     try {
 
@@ -1063,12 +1818,18 @@ async function loadClasses() {
                 `${API_URL}/classes`
             );
 
+
         classes =
             Array.isArray(data)
                 ? data
                 : Array.isArray(data.classes)
                     ? data.classes
                     : [];
+
+
+        allClasses =
+            classes;
+
 
         renderClasses();
 
@@ -1081,17 +1842,22 @@ async function loadClasses() {
             error
         );
 
+
         classes = [];
+        allClasses = [];
+
 
         if (table) {
 
-            table.innerHTML =
-                `<tr>
+            table.innerHTML = `
+                <tr>
                     <td colspan="5">
                         ${escapeHTML(error.message)}
                     </td>
-                </tr>`;
+                </tr>
+            `;
         }
+
 
         updateClassCount();
     }
@@ -1103,7 +1869,9 @@ function updateClassCount() {
     const element =
         getElement("classCount");
 
+
     if (element) {
+
         element.textContent =
             classes.length;
     }
@@ -1115,7 +1883,9 @@ function renderClasses(list = classes) {
     const table =
         getElement("classesTable");
 
+
     if (!table) return;
+
 
     if (!list.length) {
 
@@ -1124,6 +1894,7 @@ function renderClasses(list = classes) {
 
         return;
     }
+
 
     table.innerHTML =
         list.map(item => `
@@ -1137,27 +1908,31 @@ function renderClasses(list = classes) {
                 <td>
                     ${escapeHTML(
                         item.name ||
-                        item.className
+                        item.className ||
+                        ""
                     )}
                 </td>
 
                 <td>
                     ${escapeHTML(
                         item.teacher ||
-                        item.teacherName
+                        item.teacherName ||
+                        ""
                     )}
                 </td>
 
                 <td>
                     ${escapeHTML(
                         item.room ||
-                        item.roomNumber
+                        item.roomNumber ||
+                        ""
                     )}
                 </td>
 
                 <td>
 
                     <button
+                        type="button"
                         class="edit-btn"
                         onclick="editClass(${Number(item.id)})"
                     >
@@ -1165,6 +1940,7 @@ function renderClasses(list = classes) {
                     </button>
 
                     <button
+                        type="button"
                         class="delete-btn"
                         onclick="deleteClass(${Number(item.id)})"
                     >
@@ -1184,29 +1960,37 @@ function searchClasses() {
     const input =
         getElement("classSearch");
 
+
     if (!input) return;
+
 
     const search =
         input.value
             .trim()
             .toLowerCase();
 
+
     if (!search) {
+
         renderClasses();
+
         return;
     }
 
+
     const filtered =
-        classes.filter(item =>
-            `
-                ${item.id}
-                ${item.name || item.className}
-                ${item.teacher || item.teacherName}
-                ${item.room || item.roomNumber}
-            `
-            .toLowerCase()
-            .includes(search)
+        classes.filter(
+            item =>
+                `
+                    ${item.id}
+                    ${item.name || item.className}
+                    ${item.teacher || item.teacherName}
+                    ${item.room || item.roomNumber}
+                `
+                .toLowerCase()
+                .includes(search)
         );
+
 
     renderClasses(filtered);
 }
@@ -1216,16 +2000,25 @@ function editClass(id) {
 
     const item =
         classes.find(
-            x => Number(x.id) === Number(id)
+            x =>
+                Number(x.id) ===
+                Number(id)
         );
 
+
     if (!item) {
-        alert("Class not found.");
+
+        alert(
+            "Class not found."
+        );
+
         return;
     }
 
+
     editingClassId =
         Number(id);
+
 
     const name =
         getElement("className");
@@ -1236,36 +2029,50 @@ function editClass(id) {
     const room =
         getElement("classRoom");
 
+
     if (name) {
+
         name.value =
             item.name ||
             item.className ||
             "";
     }
 
+
     if (teacher) {
+
         teacher.value =
             item.teacher ||
             item.teacherName ||
             "";
     }
 
+
     if (room) {
+
         room.value =
             item.room ||
             item.roomNumber ||
             "";
     }
 
+
     const title =
-        getElement("classModalTitle");
+        getElement(
+            "classModalTitle"
+        );
+
 
     if (title) {
+
         title.textContent =
             "Edit Class";
     }
 
-    openModal("classModal");
+
+    openModal(
+        "classModal"
+    );
 }
 
 
@@ -1275,51 +2082,64 @@ async function saveClass(event) {
         event.preventDefault();
     }
 
+
     const name =
         getElement("className")
             ?.value
             .trim() || "";
+
 
     const teacher =
         getElement("classTeacher")
             ?.value
             .trim() || "";
 
+
     const room =
         getElement("classRoom")
             ?.value
             .trim() || "";
 
+
     if (!name) {
+
         alert(
             "Please enter a class name."
         );
+
         return;
     }
+
 
     try {
 
         const editing =
             editingClassId !== null;
 
+
         const url =
             editing
                 ? `${API_URL}/classes/${editingClassId}`
                 : `${API_URL}/classes`;
 
-        await getJSON(url, {
 
-            method:
-                editing
-                    ? "PUT"
-                    : "POST",
+        await getJSON(
+            url,
+            {
 
-            body: JSON.stringify({
-                name,
-                teacher,
-                room
-            })
-        });
+                method:
+                    editing
+                        ? "PUT"
+                        : "POST",
+
+                body: JSON.stringify({
+                    name,
+                    teacher,
+                    room
+                })
+            }
+        );
+
 
         alert(
             editing
@@ -1327,19 +2147,33 @@ async function saveClass(event) {
                 : "Class added successfully."
         );
 
-        editingClassId = null;
 
-        getElement("classForm")?.reset();
+        editingClassId =
+            null;
+
+
+        getElement(
+            "classForm"
+        )?.reset();
+
 
         const title =
-            getElement("classModalTitle");
+            getElement(
+                "classModalTitle"
+            );
+
 
         if (title) {
+
             title.textContent =
                 "Add Class";
         }
 
-        closeModal("classModal");
+
+        closeModal(
+            "classModal"
+        );
+
 
         await loadClasses();
 
@@ -1359,18 +2193,24 @@ async function deleteClass(id) {
 
     const item =
         classes.find(
-            x => Number(x.id) === Number(id)
+            x =>
+                Number(x.id) ===
+                Number(id)
         );
 
-    if (!confirm(
-        `Delete ${
-            item?.name ||
-            item?.className ||
-            "this class"
-        }?`
-    )) {
+
+    if (
+        !confirm(
+            `Delete ${
+                item?.name ||
+                item?.className ||
+                "this class"
+            }?`
+        )
+    ) {
         return;
     }
+
 
     try {
 
@@ -1381,9 +2221,11 @@ async function deleteClass(id) {
             }
         );
 
+
         alert(
             "Class deleted successfully."
         );
+
 
         await loadClasses();
 
@@ -1408,10 +2250,20 @@ function openModal(id) {
     const modal =
         getElement(id);
 
-    if (!modal) return;
+
+    if (!modal) {
+
+        console.error(
+            `Modal not found: ${id}`
+        );
+
+        return;
+    }
+
 
     modal.style.display =
         "flex";
+
 
     modal.classList.add(
         "active",
@@ -1425,10 +2277,13 @@ function closeModal(id) {
     const modal =
         getElement(id);
 
+
     if (!modal) return;
+
 
     modal.style.display =
         "none";
+
 
     modal.classList.remove(
         "active",
@@ -1446,29 +2301,44 @@ function showSection(name) {
     const validSections = [
         "students",
         "teachers",
-        "classes"
+        "classes",
+        "attendance",
+        "monthlyAttendance"
     ];
 
-    if (!validSections.includes(name)) {
+
+    if (
+        !validSections.includes(name)
+    ) {
         return;
     }
+
 
     document
         .querySelectorAll(".section")
         .forEach(section => {
 
-            section.classList.remove("active");
-            section.style.display = "none";
+            section.classList.remove(
+                "active"
+            );
+
+            section.style.display =
+                "none";
         });
 
 
     const selected =
         getElement(name);
 
+
     if (selected) {
 
-        selected.classList.add("active");
-        selected.style.display = "block";
+        selected.classList.add(
+            "active"
+        );
+
+        selected.style.display =
+            "block";
     }
 
 
@@ -1477,15 +2347,18 @@ function showSection(name) {
             ".tab-button"
         );
 
+
     buttons.forEach(button => {
 
         button.classList.remove(
             "active"
         );
 
+
         const text =
             button.textContent
                 .toLowerCase();
+
 
         if (
             (name === "students" &&
@@ -1495,8 +2368,16 @@ function showSection(name) {
                 text.includes("teachers")) ||
 
             (name === "classes" &&
-                text.includes("classes"))
+                text.includes("classes")) ||
+
+            (name === "attendance" &&
+                text.includes("attendance") &&
+                !text.includes("monthly")) ||
+
+            (name === "monthlyAttendance" &&
+                text.includes("monthly"))
         ) {
+
             button.classList.add(
                 "active"
             );
@@ -1508,47 +2389,1221 @@ function showSection(name) {
         loadStudents();
     }
 
+
     if (name === "teachers") {
         loadTeachers();
     }
 
+
     if (name === "classes") {
         loadClasses();
+    }
+
+
+    if (name === "attendance") {
+
+        createAttendanceSection();
+
+        const section =
+            getElement("attendance");
+
+        if (section) {
+            section.style.display =
+                "block";
+        }
+    }
+
+
+    if (
+        name ===
+        "monthlyAttendance"
+    ) {
+
+        createMonthlyAttendanceSection();
+
+        const section =
+            getElement(
+                "monthlyAttendance"
+            );
+
+        if (section) {
+            section.style.display =
+                "block";
+        }
     }
 }
 
 
 /* =========================================================
-   APPLICATION STARTUP
+   ATTENDANCE
+========================================================= */
+
+function createAttendanceSection() {
+
+    if (
+        getElement("attendance")
+    ) {
+        return;
+    }
+
+
+    const nav =
+        document.querySelector("nav");
+
+
+    if (nav) {
+
+        const button =
+            document.createElement(
+                "button"
+            );
+
+        button.className =
+            "tab-button";
+
+        button.textContent =
+            "📋 Attendance";
+
+        button.type =
+            "button";
+
+        button.onclick =
+            () =>
+                showSection(
+                    "attendance"
+                );
+
+        nav.appendChild(
+            button
+        );
+    }
+
+
+    const main =
+        document.querySelector("main");
+
+
+    if (!main) return;
+
+
+    const section =
+        document.createElement(
+            "section"
+        );
+
+
+    section.id =
+        "attendance";
+
+    section.className =
+        "section";
+
+    section.style.display =
+        "none";
+
+
+    section.innerHTML = `
+
+        <div class="section-header">
+
+            <div>
+
+                <h2>
+                    Attendance
+                </h2>
+
+                <p>
+                    Mark and manage student attendance
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div
+            style="
+                display:flex;
+                gap:12px;
+                align-items:center;
+                flex-wrap:wrap;
+                margin:20px 0;
+            "
+        >
+
+            <label>
+                <strong>Date:</strong>
+            </label>
+
+            <input
+                type="date"
+                id="attendanceDate"
+                style="
+                    padding:10px;
+                    border:1px solid #d1d5db;
+                    border-radius:8px;
+                "
+            >
+
+            <button
+                type="button"
+                class="primary-button"
+                onclick="loadAttendance()"
+            >
+                Load Attendance
+            </button>
+
+        </div>
+
+
+        <div
+            id="attendanceSummary"
+            style="
+                margin-bottom:15px;
+                font-weight:600;
+            "
+        ></div>
+
+
+        <div style="overflow-x:auto;">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Student
+                        </th>
+
+                        <th>
+                            Class
+                        </th>
+
+                        <th>
+                            Status
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody
+                    id="attendanceTable"
+                >
+
+                    <tr>
+
+                        <td colspan="3">
+                            Select a date and load attendance.
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <div style="margin-top:20px;">
+
+            <button
+                type="button"
+                class="primary-button"
+                onclick="saveAttendance()"
+            >
+                💾 Save Attendance
+            </button>
+
+        </div>
+    `;
+
+
+    main.appendChild(
+        section
+    );
+
+
+    const dateInput =
+        getElement(
+            "attendanceDate"
+        );
+
+
+    if (dateInput) {
+
+        dateInput.value =
+            new Date()
+                .toISOString()
+                .slice(0, 10);
+    }
+}
+
+
+async function loadAttendance() {
+
+    const dateInput =
+        getElement(
+            "attendanceDate"
+        );
+
+    const table =
+        getElement(
+            "attendanceTable"
+        );
+
+
+    if (
+        !dateInput ||
+        !table
+    ) {
+        return;
+    }
+
+
+    const date =
+        dateInput.value;
+
+
+    if (!date) {
+
+        alert(
+            "Please select a date."
+        );
+
+        return;
+    }
+
+
+    try {
+
+        if (!students.length) {
+            await loadStudents();
+        }
+
+
+        allStudents =
+            students;
+
+
+        const data =
+            await getJSON(
+                `${API_URL}/attendance?date=${encodeURIComponent(date)}`
+            );
+
+
+        attendanceRecords =
+            {};
+
+
+        if (Array.isArray(data)) {
+
+            data.forEach(
+                record => {
+
+                    attendanceRecords[
+                        Number(
+                            record.studentId
+                        )
+                    ] =
+                        record.status;
+                }
+            );
+        }
+
+
+        renderAttendance();
+
+    } catch (error) {
+
+        console.error(
+            "LOAD ATTENDANCE ERROR:",
+            error
+        );
+
+
+        table.innerHTML = `
+
+            <tr>
+
+                <td colspan="3">
+                    Failed to load attendance.
+                </td>
+
+            </tr>
+
+        `;
+    }
+}
+
+
+function renderAttendance() {
+
+    const table =
+        getElement(
+            "attendanceTable"
+        );
+
+    const summary =
+        getElement(
+            "attendanceSummary"
+        );
+
+
+    if (!table) return;
+
+
+    allStudents =
+        students;
+
+
+    if (!allStudents.length) {
+
+        table.innerHTML = `
+
+            <tr>
+
+                <td colspan="3">
+                    No students found.
+                </td>
+
+            </tr>
+
+        `;
+
+        return;
+    }
+
+
+    table.innerHTML =
+        allStudents.map(
+            student => {
+
+                const id =
+                    Number(
+                        student.id
+                    );
+
+
+                const status =
+                    attendanceRecords[id] ||
+                    "Present";
+
+
+                const photo =
+                    student.photo
+
+                        ? `
+
+                            <img
+                                src="${escapeHTML(student.photo)}"
+                                style="
+                                    width:38px;
+                                    height:38px;
+                                    border-radius:50%;
+                                    object-fit:cover;
+                                "
+                            >
+
+                        `
+
+                        : `
+
+                            <div
+                                style="
+                                    width:38px;
+                                    height:38px;
+                                    border-radius:50%;
+                                    display:inline-flex;
+                                    align-items:center;
+                                    justify-content:center;
+                                    background:linear-gradient(
+                                        135deg,
+                                        #2563eb,
+                                        #7c3aed
+                                    );
+                                    color:white;
+                                    font-weight:700;
+                                "
+                            >
+                                ${escapeHTML(
+                                    (
+                                        student.name ||
+                                        "S"
+                                    )
+                                    .charAt(0)
+                                    .toUpperCase()
+                                )}
+                            </div>
+
+                        `;
+
+
+                return `
+
+                    <tr>
+
+                        <td>
+
+                            <div
+                                style="
+                                    display:flex;
+                                    align-items:center;
+                                    gap:10px;
+                                "
+                            >
+
+                                ${photo}
+
+                                <strong>
+                                    ${escapeHTML(
+                                        student.name
+                                    )}
+                                </strong>
+
+                            </div>
+
+                        </td>
+
+
+                        <td>
+                            ${escapeHTML(
+                                student.className
+                            )}
+                        </td>
+
+
+                        <td>
+
+                            <select
+                                onchange="
+                                    setAttendanceStatus(
+                                        ${id},
+                                        this.value
+                                    )
+                                "
+                                style="
+                                    padding:8px;
+                                    border-radius:8px;
+                                    border:1px solid #d1d5db;
+                                "
+                            >
+
+                                <option
+                                    value="Present"
+                                    ${
+                                        status ===
+                                        "Present"
+                                            ? "selected"
+                                            : ""
+                                    }
+                                >
+                                    Present
+                                </option>
+
+                                <option
+                                    value="Absent"
+                                    ${
+                                        status ===
+                                        "Absent"
+                                            ? "selected"
+                                            : ""
+                                    }
+                                >
+                                    Absent
+                                </option>
+
+                                <option
+                                    value="Late"
+                                    ${
+                                        status ===
+                                        "Late"
+                                            ? "selected"
+                                            : ""
+                                    }
+                                >
+                                    Late
+                                </option>
+
+                            </select>
+
+                        </td>
+
+                    </tr>
+
+                `;
+            }
+        ).join("");
+
+
+    updateAttendanceSummary();
+}
+
+
+function setAttendanceStatus(
+    studentId,
+    status
+) {
+
+    attendanceRecords[
+        Number(studentId)
+    ] =
+        status;
+
+
+    updateAttendanceSummary();
+}
+
+
+function updateAttendanceSummary() {
+
+    const summary =
+        getElement(
+            "attendanceSummary"
+        );
+
+
+    if (!summary) return;
+
+
+    allStudents =
+        students;
+
+
+    let present = 0;
+    let absent = 0;
+    let late = 0;
+
+
+    allStudents.forEach(
+        student => {
+
+            const status =
+                attendanceRecords[
+                    Number(student.id)
+                ] ||
+                "Present";
+
+
+            if (status === "Present") {
+                present++;
+            }
+
+            if (status === "Absent") {
+                absent++;
+            }
+
+            if (status === "Late") {
+                late++;
+            }
+        }
+    );
+
+
+    summary.textContent =
+        `Present: ${present} | ` +
+        `Absent: ${absent} | ` +
+        `Late: ${late}`;
+}
+
+
+async function saveAttendance() {
+
+    const dateInput =
+        getElement(
+            "attendanceDate"
+        );
+
+
+    if (
+        !dateInput ||
+        !dateInput.value
+    ) {
+
+        alert(
+            "Please select a date."
+        );
+
+        return;
+    }
+
+
+    allStudents =
+        students;
+
+
+    const records =
+        allStudents.map(
+            student => ({
+
+                studentId:
+                    Number(student.id),
+
+                status:
+                    attendanceRecords[
+                        Number(student.id)
+                    ] ||
+                    "Present"
+            })
+        );
+
+
+    try {
+
+        await getJSON(
+            `${API_URL}/attendance`,
+            {
+
+                method: "POST",
+
+                body: JSON.stringify({
+
+                    date:
+                        dateInput.value,
+
+                    records
+                })
+            }
+        );
+
+
+        alert(
+            "Attendance saved successfully!"
+        );
+
+
+        await loadAttendance();
+
+    } catch (error) {
+
+        console.error(
+            "SAVE ATTENDANCE ERROR:",
+            error
+        );
+
+        alert(error.message);
+    }
+}
+
+
+/* =========================================================
+   MONTHLY ATTENDANCE
+========================================================= */
+
+function createMonthlyAttendanceSection() {
+
+    if (
+        getElement(
+            "monthlyAttendance"
+        )
+    ) {
+        return;
+    }
+
+
+    const nav =
+        document.querySelector("nav");
+
+
+    if (nav) {
+
+        const button =
+            document.createElement(
+                "button"
+            );
+
+        button.className =
+            "tab-button";
+
+        button.type =
+            "button";
+
+        button.textContent =
+            "📊 Monthly";
+
+        button.onclick =
+            () =>
+                showSection(
+                    "monthlyAttendance"
+                );
+
+        nav.appendChild(
+            button
+        );
+    }
+
+
+    const main =
+        document.querySelector("main");
+
+
+    if (!main) return;
+
+
+    const section =
+        document.createElement(
+            "section"
+        );
+
+
+    section.id =
+        "monthlyAttendance";
+
+    section.className =
+        "section";
+
+    section.style.display =
+        "none";
+
+
+    section.innerHTML = `
+
+        <div class="section-header">
+
+            <div>
+
+                <h2>
+                    Monthly Attendance
+                </h2>
+
+                <p>
+                    View student attendance for an entire month
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div
+            style="
+                display:flex;
+                gap:12px;
+                align-items:center;
+                flex-wrap:wrap;
+                margin:20px 0;
+            "
+        >
+
+            <label>
+                <strong>Month:</strong>
+            </label>
+
+            <input
+                type="month"
+                id="monthlyAttendanceDate"
+                style="
+                    padding:10px;
+                    border:1px solid #d1d5db;
+                    border-radius:8px;
+                "
+            >
+
+            <button
+                type="button"
+                class="primary-button"
+                onclick="loadMonthlyAttendance()"
+            >
+                📊 View Monthly Report
+            </button>
+
+        </div>
+
+
+        <div
+            id="monthlyAttendanceSummary"
+            style="
+                margin-bottom:15px;
+                font-weight:600;
+            "
+        ></div>
+
+
+        <div style="overflow-x:auto;">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Student
+                        </th>
+
+                        <th>
+                            Class
+                        </th>
+
+                        <th>
+                            Present
+                        </th>
+
+                        <th>
+                            Absent
+                        </th>
+
+                        <th>
+                            Late
+                        </th>
+
+                        <th>
+                            Total Days
+                        </th>
+
+                        <th>
+                            Attendance
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody
+                    id="monthlyAttendanceTable"
+                >
+
+                    <tr>
+
+                        <td colspan="7">
+                            Select a month to view attendance.
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+    `;
+
+
+    main.appendChild(
+        section
+    );
+
+
+    const input =
+        getElement(
+            "monthlyAttendanceDate"
+        );
+
+
+    if (input) {
+
+        input.value =
+            new Date()
+                .toISOString()
+                .slice(0, 7);
+    }
+}
+
+
+async function loadMonthlyAttendance() {
+
+    const input =
+        getElement(
+            "monthlyAttendanceDate"
+        );
+
+    const table =
+        getElement(
+            "monthlyAttendanceTable"
+        );
+
+    const summary =
+        getElement(
+            "monthlyAttendanceSummary"
+        );
+
+
+    if (
+        !input ||
+        !table
+    ) {
+        return;
+    }
+
+
+    const month =
+        input.value;
+
+
+    if (!month) {
+
+        alert(
+            "Please select a month."
+        );
+
+        return;
+    }
+
+
+    try {
+
+        const data =
+            await getJSON(
+                `${API_URL}/attendance/monthly?month=${encodeURIComponent(month)}`
+            );
+
+
+        if (
+            !Array.isArray(data) ||
+            !data.length
+        ) {
+
+            table.innerHTML = `
+
+                <tr>
+
+                    <td colspan="7">
+                        No attendance records found.
+                    </td>
+
+                </tr>
+
+            `;
+
+            if (summary) {
+                summary.textContent = "";
+            }
+
+            return;
+        }
+
+
+        let totalPresent = 0;
+        let totalAbsent = 0;
+        let totalLate = 0;
+
+
+        table.innerHTML =
+            data.map(
+                student => {
+
+                    totalPresent +=
+                        Number(
+                            student.present
+                        ) || 0;
+
+                    totalAbsent +=
+                        Number(
+                            student.absent
+                        ) || 0;
+
+                    totalLate +=
+                        Number(
+                            student.late
+                        ) || 0;
+
+
+                    const photo =
+                        student.photo
+
+                            ? `
+
+                                <img
+                                    src="${escapeHTML(student.photo)}"
+                                    style="
+                                        width:38px;
+                                        height:38px;
+                                        border-radius:50%;
+                                        object-fit:cover;
+                                    "
+                                >
+
+                            `
+
+                            : `
+
+                                <div
+                                    style="
+                                        width:38px;
+                                        height:38px;
+                                        border-radius:50%;
+                                        display:inline-flex;
+                                        align-items:center;
+                                        justify-content:center;
+                                        background:linear-gradient(
+                                            135deg,
+                                            #2563eb,
+                                            #7c3aed
+                                        );
+                                        color:white;
+                                        font-weight:700;
+                                    "
+                                >
+                                    ${escapeHTML(
+                                        (
+                                            student.name ||
+                                            "S"
+                                        )
+                                        .charAt(0)
+                                        .toUpperCase()
+                                    )}
+                                </div>
+
+                            `;
+
+
+                    return `
+
+                        <tr>
+
+                            <td>
+
+                                <div
+                                    style="
+                                        display:flex;
+                                        align-items:center;
+                                        gap:10px;
+                                    "
+                                >
+
+                                    ${photo}
+
+                                    <strong>
+                                        ${escapeHTML(
+                                            student.name
+                                        )}
+                                    </strong>
+
+                                </div>
+
+                            </td>
+
+
+                            <td>
+                                ${escapeHTML(
+                                    student.className
+                                )}
+                            </td>
+
+
+                            <td>
+                                ${escapeHTML(
+                                    student.present
+                                )}
+                            </td>
+
+
+                            <td>
+                                ${escapeHTML(
+                                    student.absent
+                                )}
+                            </td>
+
+
+                            <td>
+                                ${escapeHTML(
+                                    student.late
+                                )}
+                            </td>
+
+
+                            <td>
+                                ${escapeHTML(
+                                    student.total
+                                )}
+                            </td>
+
+
+                            <td>
+
+                                <strong>
+                                    ${escapeHTML(
+                                        student.percentage
+                                    )}%
+                                </strong>
+
+                            </td>
+
+                        </tr>
+
+                    `;
+                }
+            ).join("");
+
+
+        if (summary) {
+
+            summary.textContent =
+                `Present: ${totalPresent} | ` +
+                `Absent: ${totalAbsent} | ` +
+                `Late: ${totalLate}`;
+        }
+
+    } catch (error) {
+
+        console.error(
+            "MONTHLY ATTENDANCE ERROR:",
+            error
+        );
+
+
+        table.innerHTML = `
+
+            <tr>
+
+                <td colspan="7">
+                    Failed to load monthly attendance.
+                </td>
+
+            </tr>
+
+        `;
+    }
+}
+
+
+/* =========================================================
+   APPLICATION SETUP
 ========================================================= */
 
 function setupApplication() {
 
     const studentForm =
-        getElement("studentForm");
+        getElement(
+            "studentForm"
+        );
 
     const teacherForm =
-        getElement("teacherForm");
+        getElement(
+            "teacherForm"
+        );
 
     const classForm =
-        getElement("classForm");
+        getElement(
+            "classForm"
+        );
 
 
     if (studentForm) {
+
         studentForm.addEventListener(
             "submit",
             addStudent
         );
     }
 
+
     if (teacherForm) {
+
         teacherForm.addEventListener(
             "submit",
             saveTeacher
         );
     }
 
+
     if (classForm) {
+
         classForm.addEventListener(
             "submit",
             saveClass
@@ -1557,7 +3612,10 @@ function setupApplication() {
 
 
     const photoUpload =
-        getElement("studentPhotoUpload");
+        getElement(
+            "studentPhotoUpload"
+        );
+
 
     if (photoUpload) {
 
@@ -1573,10 +3631,13 @@ function setupApplication() {
         event => {
 
             if (
+                event.target &&
+                event.target.classList &&
                 event.target.classList.contains(
                     "modal"
                 )
             ) {
+
                 closeModal(
                     event.target.id
                 );
@@ -1585,7 +3646,27 @@ function setupApplication() {
     );
 
 
-    showSection("students");
+    /*
+       Create the student profile modal
+       immediately when the application starts.
+    */
+
+    createStudentProfileModal();
+
+
+    /*
+       Attendance and Monthly Attendance
+       are created dynamically.
+    */
+
+    createAttendanceSection();
+
+    createMonthlyAttendanceSection();
+
+
+    showSection(
+        "students"
+    );
 
 
     Promise.all([
@@ -1597,24 +3678,36 @@ function setupApplication() {
 
 
 /* =========================================================
-   GLOBAL FUNCTIONS FOR HTML onclick
+   GLOBAL FUNCTIONS
 ========================================================= */
 
-window.loadStudents = loadStudents;
-window.addStudent = addStudent;
-window.editStudent = editStudent;
-window.deleteStudent = deleteStudent;
-window.searchStudents = searchStudents;
-window.viewStudent = viewStudent;
+window.loadStudents =
+    loadStudents;
+
+window.addStudent =
+    addStudent;
+
+window.editStudent =
+    editStudent;
+
+window.deleteStudent =
+    deleteStudent;
+
+window.searchStudents =
+    searchStudents;
+
+window.viewStudent =
+    viewStudent;
+
+
+window.chooseStudentPhoto =
+    chooseStudentPhoto;
 
 window.uploadStudentPhoto =
     uploadStudentPhoto;
 
 window.removeStudentPhoto =
     removeStudentPhoto;
-
-window.chooseStudentPhoto =
-    chooseStudentPhoto;
 
 
 window.loadTeachers =
@@ -1662,422 +3755,6 @@ window.showSection =
     showSection;
 
 
-/* =========================================================
-   START
-========================================================= */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    setupApplication
-);
-
-
-console.log(
-    "SchoolConnect frontend loaded successfully."
-);
-
-console.log(
-    "Login and registration are disabled."
-);
-
-
-
-const viewButtonStyle = document.createElement("style");
-viewButtonStyle.textContent = `
-    .view-btn {
-        border: none;
-        padding: 7px 12px;
-        border-radius: 6px;
-        cursor: pointer;
-        background: #2563eb;
-        color: white;
-        margin-right: 5px;
-    }
-
-    .view-btn:hover {
-        opacity: 0.85;
-    }
-`;
-document.head.appendChild(viewButtonStyle);
-
-/* FINAL STUDENT SEARCH FIX */
-function searchStudents() {
-    const input = document.getElementById("studentSearch");
-
-    if (!input) return;
-
-    const query = input.value.trim().toLowerCase();
-
-    const filtered = students.filter(student => {
-        const id = String(student.id ?? "").toLowerCase();
-        const name = String(student.name ?? "").toLowerCase();
-        const age = String(student.age ?? "").toLowerCase();
-        const className = String(student.className ?? "").toLowerCase();
-
-        return (
-            id.includes(query) ||
-            name.includes(query) ||
-            age.includes(query) ||
-            className.includes(query)
-        );
-    });
-
-    renderStudents(filtered);
-}
-
-/* =========================================================
-   ATTENDANCE
-========================================================= */
-
-let attendanceRecords = {};
-
-function createAttendanceSection() {
-    if (document.getElementById("attendance")) return;
-
-    const nav = document.querySelector("nav");
-
-    if (nav) {
-        const button = document.createElement("button");
-        button.className = "tab-button";
-        button.textContent = "📋 Attendance";
-        button.onclick = () => showSection("attendance");
-        nav.appendChild(button);
-    }
-
-    const main = document.querySelector("main");
-
-    if (!main) return;
-
-    const section = document.createElement("section");
-
-    section.id = "attendance";
-    section.className = "section";
-    section.style.display = "none";
-
-    section.innerHTML = `
-        <div class="section-header">
-            <div>
-                <h2>Attendance</h2>
-                <p>Mark and manage student attendance</p>
-            </div>
-        </div>
-
-        <div style="
-            display:flex;
-            gap:12px;
-            align-items:center;
-            flex-wrap:wrap;
-            margin:20px 0;
-        ">
-            <label>
-                <strong>Date:</strong>
-            </label>
-
-            <input
-                type="date"
-                id="attendanceDate"
-                style="
-                    padding:10px;
-                    border:1px solid #d1d5db;
-                    border-radius:8px;
-                "
-            >
-
-            <button
-                type="button"
-                class="primary-button"
-                onclick="loadAttendance()">
-                Load Attendance
-            </button>
-        </div>
-
-        <div id="attendanceSummary" style="
-            margin-bottom:15px;
-            font-weight:600;
-        "></div>
-
-        <div style="overflow-x:auto;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Student</th>
-                        <th>Class</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-
-                <tbody id="attendanceTable">
-                    <tr>
-                        <td colspan="3">
-                            Select a date and load attendance.
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div style="margin-top:20px;">
-            <button
-                type="button"
-                class="primary-button"
-                onclick="saveAttendance()">
-                💾 Save Attendance
-            </button>
-        </div>
-    `;
-
-    main.appendChild(section);
-
-    const dateInput =
-        document.getElementById("attendanceDate");
-
-    if (dateInput) {
-        dateInput.value =
-            new Date().toISOString().slice(0, 10);
-    }
-}
-
-async function loadAttendance() {
-    const dateInput =
-        document.getElementById("attendanceDate");
-
-    const table =
-        document.getElementById("attendanceTable");
-
-    if (!dateInput || !table) return;
-
-    const date = dateInput.value;
-
-    if (!date) {
-        alert("Please select a date.");
-        return;
-    }
-
-    try {
-        if (!allStudents.length) {
-            await loadStudents();
-        }
-
-        const data = await getJSON(
-            API_URL +
-            "/attendance?date=" +
-            encodeURIComponent(date)
-        );
-
-        attendanceRecords = {};
-
-        data.forEach(record => {
-            attendanceRecords[Number(record.studentId)] =
-                record.status;
-        });
-
-        renderAttendance();
-
-    } catch (error) {
-        console.error(
-            "LOAD ATTENDANCE ERROR:",
-            error
-        );
-
-        table.innerHTML = `
-            <tr>
-                <td colspan="3">
-                    Failed to load attendance.
-                </td>
-            </tr>
-        `;
-    }
-}
-
-function renderAttendance() {
-    const table =
-        document.getElementById("attendanceTable");
-
-    const summary =
-        document.getElementById("attendanceSummary");
-
-    if (!table) return;
-
-    if (!allStudents.length) {
-        table.innerHTML = `
-            <tr>
-                <td colspan="3">
-                    No students found.
-                </td>
-            </tr>
-        `;
-
-        return;
-    }
-
-    table.innerHTML = allStudents.map(student => {
-        const id = Number(student.id);
-
-        const status =
-            attendanceRecords[id] || "Present";
-
-        const photo = student.photo
-            ? `<img
-                src="${escapeHTML(student.photo)}"
-                style="
-                    width:38px;
-                    height:38px;
-                    border-radius:50%;
-                    object-fit:cover;
-                "
-              >`
-            : `<div style="
-                    width:38px;
-                    height:38px;
-                    border-radius:50%;
-                    display:inline-flex;
-                    align-items:center;
-                    justify-content:center;
-                    background:linear-gradient(135deg,#2563eb,#7c3aed);
-                    color:white;
-                    font-weight:700;
-                ">
-                    ${escapeHTML(
-                        (student.name || "S")
-                            .charAt(0)
-                            .toUpperCase()
-                    )}
-                </div>`;
-
-        return `
-            <tr>
-                <td>
-                    <div style="
-                        display:flex;
-                        align-items:center;
-                        gap:10px;
-                    ">
-                        ${photo}
-                        <strong>
-                            ${escapeHTML(student.name)}
-                        </strong>
-                    </div>
-                </td>
-
-                <td>
-                    ${escapeHTML(student.className)}
-                </td>
-
-                <td>
-                    <select
-                        onchange="setAttendanceStatus(
-                            ${id},
-                            this.value
-                        )"
-                        style="
-                            padding:8px;
-                            border-radius:8px;
-                            border:1px solid #d1d5db;
-                        "
-                    >
-                        <option
-                            value="Present"
-                            ${status === "Present" ? "selected" : ""}
-                        >
-                            Present
-                        </option>
-
-                        <option
-                            value="Absent"
-                            ${status === "Absent" ? "selected" : ""}
-                        >
-                            Absent
-                        </option>
-
-                        <option
-                            value="Late"
-                            ${status === "Late" ? "selected" : ""}
-                        >
-                            Late
-                        </option>
-                    </select>
-                </td>
-            </tr>
-        `;
-    }).join("");
-
-    updateAttendanceSummary();
-}
-
-function setAttendanceStatus(studentId, status) {
-    attendanceRecords[Number(studentId)] = status;
-    updateAttendanceSummary();
-}
-
-function updateAttendanceSummary() {
-    const summary =
-        document.getElementById("attendanceSummary");
-
-    if (!summary) return;
-
-    let present = 0;
-    let absent = 0;
-    let late = 0;
-
-    allStudents.forEach(student => {
-        const status =
-            attendanceRecords[Number(student.id)] ||
-            "Present";
-
-        if (status === "Present") present++;
-        if (status === "Absent") absent++;
-        if (status === "Late") late++;
-    });
-
-    summary.textContent =
-        `Present: ${present} | Absent: ${absent} | Late: ${late}`;
-}
-
-async function saveAttendance() {
-    const dateInput =
-        document.getElementById("attendanceDate");
-
-    if (!dateInput || !dateInput.value) {
-        alert("Please select a date.");
-        return;
-    }
-
-    const records = allStudents.map(student => ({
-        studentId: Number(student.id),
-        status:
-            attendanceRecords[Number(student.id)] ||
-            "Present"
-    }));
-
-    try {
-        await getJSON(
-            API_URL + "/attendance",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    date: dateInput.value,
-                    records
-                })
-            }
-        );
-
-        alert("Attendance saved successfully!");
-
-        await loadAttendance();
-
-    } catch (error) {
-        console.error(
-            "SAVE ATTENDANCE ERROR:",
-            error
-        );
-
-        alert(error.message);
-    }
-}
-
 window.createAttendanceSection =
     createAttendanceSection;
 
@@ -2091,510 +3768,122 @@ window.setAttendanceStatus =
     setAttendanceStatus;
 
 
-/* =========================================================
-   MONTHLY ATTENDANCE
-========================================================= */
-
-function createMonthlyAttendanceSection() {
-    if (document.getElementById("monthlyAttendance")) return;
-
-    const nav = document.querySelector("nav");
-
-    if (nav) {
-        const button = document.createElement("button");
-        button.className = "tab-button";
-        button.textContent = "📊 Monthly";
-        button.onclick = () =>
-            showSection("monthlyAttendance");
-
-        nav.appendChild(button);
-    }
-
-    const main = document.querySelector("main");
-
-    if (!main) return;
-
-    const section = document.createElement("section");
-
-    section.id = "monthlyAttendance";
-    section.className = "section";
-    section.style.display = "none";
-
-    section.innerHTML = `
-        <div class="section-header">
-            <div>
-                <h2>Monthly Attendance</h2>
-                <p>View student attendance for an entire month</p>
-            </div>
-        </div>
-
-        <div style="
-            display:flex;
-            gap:12px;
-            align-items:center;
-            flex-wrap:wrap;
-            margin:20px 0;
-        ">
-            <label>
-                <strong>Month:</strong>
-            </label>
-
-            <input
-                type="month"
-                id="monthlyAttendanceDate"
-                style="
-                    padding:10px;
-                    border:1px solid #d1d5db;
-                    border-radius:8px;
-                "
-            >
-
-            <button
-                type="button"
-                class="primary-button"
-                onclick="loadMonthlyAttendance()">
-                📊 View Monthly Report
-            </button>
-        </div>
-
-        <div id="monthlyAttendanceSummary"
-             style="margin-bottom:15px;font-weight:600;">
-        </div>
-
-        <div style="overflow-x:auto;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Student</th>
-                        <th>Class</th>
-                        <th>Present</th>
-                        <th>Absent</th>
-                        <th>Late</th>
-                        <th>Total Days</th>
-                        <th>Attendance</th>
-                    </tr>
-                </thead>
-
-                <tbody id="monthlyAttendanceTable">
-                    <tr>
-                        <td colspan="7">
-                            Select a month to view attendance.
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    `;
-
-    main.appendChild(section);
-
-    const input =
-        document.getElementById("monthlyAttendanceDate");
-
-    if (input) {
-        input.value =
-            new Date().toISOString().slice(0, 7);
-    }
-}
-
-async function loadMonthlyAttendance() {
-    const input =
-        document.getElementById("monthlyAttendanceDate");
-
-    const table =
-        document.getElementById("monthlyAttendanceTable");
-
-    const summary =
-        document.getElementById("monthlyAttendanceSummary");
-
-    if (!input || !table) return;
-
-    const month = input.value;
-
-    if (!month) {
-        alert("Please select a month.");
-        return;
-    }
-
-    try {
-        const data = await getJSON(
-            API_URL +
-            "/attendance/monthly?month=" +
-            encodeURIComponent(month)
-        );
-
-        if (!data.length) {
-            table.innerHTML = `
-                <tr>
-                    <td colspan="7">
-                        No students found.
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        let totalPresent = 0;
-        let totalAbsent = 0;
-        let totalLate = 0;
-
-        table.innerHTML = data.map(student => {
-            totalPresent += Number(student.present) || 0;
-            totalAbsent += Number(student.absent) || 0;
-            totalLate += Number(student.late) || 0;
-
-            const photo = student.photo
-                ? `
-                    <img
-                        src="${escapeHTML(student.photo)}"
-                        style="
-                            width:38px;
-                            height:38px;
-                            border-radius:50%;
-                            object-fit:cover;
-                        "
-                    >
-                `
-                : `
-                    <div style="
-                        width:38px;
-                        height:38px;
-                        border-radius:50%;
-                        display:inline-flex;
-                        align-items:center;
-                        justify-content:center;
-                        background:linear-gradient(
-                            135deg,
-                            #2563eb,
-                            #7c3aed
-                        );
-                        color:white;
-                        font-weight:700;
-                    ">
-                        ${escapeHTML(
-                            (student.name || "S")
-                                .charAt(0)
-                                .toUpperCase()
-                        )}
-                    </div>
-                `;
-
-            return `
-                <tr>
-                    <td>
-                        <div style="
-                            display:flex;
-                            align-items:center;
-                            gap:10px;
-                        ">
-                            ${photo}
-                            <strong>
-                                ${escapeHTML(student.name)}
-                            </strong>
-                        </div>
-                    </td>
-
-                    <td>
-                        ${escapeHTML(student.className)}
-                    </td>
-
-                    <td>${student.present}</td>
-                    <td>${student.absent}</td>
-                    <td>${student.late}</td>
-                    <td>${student.total}</td>
-
-                    <td>
-                        <strong>
-                            ${student.percentage}%
-                        </strong>
-                    </td>
-                </tr>
-            `;
-        }).join("");
-
-        summary.textContent =
-            `Present: ${totalPresent} | ` +
-            `Absent: ${totalAbsent} | ` +
-            `Late: ${totalLate}`;
-
-    } catch (error) {
-        console.error(
-            "MONTHLY ATTENDANCE ERROR:",
-            error
-        );
-
-        table.innerHTML = `
-            <tr>
-                <td colspan="7">
-                    Failed to load monthly attendance.
-                </td>
-            </tr>
-        `;
-    }
-}
-
 window.createMonthlyAttendanceSection =
     createMonthlyAttendanceSection;
 
 window.loadMonthlyAttendance =
     loadMonthlyAttendance;
 
-/* Create monthly attendance when the page loads */
-document.addEventListener("DOMContentLoaded", () => {
-    createMonthlyAttendanceSection();
-});
+
+/* =========================================================
+   VIEW BUTTON STYLE
+========================================================= */
+
+const viewButtonStyle =
+    document.createElement(
+        "style"
+    );
+
+
+viewButtonStyle.textContent = `
+
+    .view-btn {
+
+        border:none;
+
+        padding:7px 12px;
+
+        border-radius:6px;
+
+        cursor:pointer;
+
+        background:#2563eb;
+
+        color:white;
+
+        margin-right:5px;
+    }
+
+
+    .view-btn:hover {
+
+        opacity:0.85;
+    }
+
+
+    .student-table-photo {
+
+        width:38px;
+
+        height:38px;
+
+        border-radius:50%;
+
+        object-fit:cover;
+    }
+
+
+    .student-table-avatar {
+
+        width:38px;
+
+        height:38px;
+
+        border-radius:50%;
+
+        display:flex;
+
+        align-items:center;
+
+        justify-content:center;
+
+        background:linear-gradient(
+            135deg,
+            #2563eb,
+            #7c3aed
+        );
+
+        color:white;
+
+        font-weight:700;
+    }
+
+
+    .student-name-cell {
+
+        display:flex;
+
+        align-items:center;
+
+        gap:10px;
+    }
+
+`;
+
+
+document.head.appendChild(
+    viewButtonStyle
+);
 
 
 /* =========================================================
-   MONTHLY ATTENDANCE
+   START APPLICATION
 ========================================================= */
 
-function createMonthlyAttendanceSection() {
-    if (document.getElementById("monthlyAttendance")) return;
+document.addEventListener(
+    "DOMContentLoaded",
+    setupApplication
+);
 
-    const nav = document.querySelector("nav");
 
-    if (nav) {
-        const button = document.createElement("button");
-        button.className = "tab-button";
-        button.textContent = "📊 Monthly";
-        button.onclick = () =>
-            showSection("monthlyAttendance");
+console.log(
+    "SchoolConnect frontend loaded successfully."
+);
 
-        nav.appendChild(button);
-    }
+console.log(
+    "Student profile window is enabled."
+);
 
-    const main = document.querySelector("main");
-
-    if (!main) return;
-
-    const section = document.createElement("section");
-
-    section.id = "monthlyAttendance";
-    section.className = "section";
-    section.style.display = "none";
-
-    section.innerHTML = `
-        <div class="section-header">
-            <div>
-                <h2>Monthly Attendance</h2>
-                <p>View student attendance for an entire month</p>
-            </div>
-        </div>
-
-        <div style="
-            display:flex;
-            gap:12px;
-            align-items:center;
-            flex-wrap:wrap;
-            margin:20px 0;
-        ">
-            <label>
-                <strong>Month:</strong>
-            </label>
-
-            <input
-                type="month"
-                id="monthlyAttendanceDate"
-                style="
-                    padding:10px;
-                    border:1px solid #d1d5db;
-                    border-radius:8px;
-                "
-            >
-
-            <button
-                type="button"
-                class="primary-button"
-                onclick="loadMonthlyAttendance()">
-                📊 View Monthly Report
-            </button>
-        </div>
-
-        <div id="monthlyAttendanceSummary"
-             style="margin-bottom:15px;font-weight:600;">
-        </div>
-
-        <div style="overflow-x:auto;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Student</th>
-                        <th>Class</th>
-                        <th>Present</th>
-                        <th>Absent</th>
-                        <th>Late</th>
-                        <th>Total Days</th>
-                        <th>Attendance</th>
-                    </tr>
-                </thead>
-
-                <tbody id="monthlyAttendanceTable">
-                    <tr>
-                        <td colspan="7">
-                            Select a month to view attendance.
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    `;
-
-    main.appendChild(section);
-
-    const input =
-        document.getElementById("monthlyAttendanceDate");
-
-    if (input) {
-        input.value =
-            new Date().toISOString().slice(0, 7);
-    }
-}
-
-async function loadMonthlyAttendance() {
-    const input =
-        document.getElementById("monthlyAttendanceDate");
-
-    const table =
-        document.getElementById("monthlyAttendanceTable");
-
-    const summary =
-        document.getElementById("monthlyAttendanceSummary");
-
-    if (!input || !table) return;
-
-    const month = input.value;
-
-    if (!month) {
-        alert("Please select a month.");
-        return;
-    }
-
-    try {
-        const data = await getJSON(
-            API_URL +
-            "/attendance/monthly?month=" +
-            encodeURIComponent(month)
-        );
-
-        if (!data.length) {
-            table.innerHTML = `
-                <tr>
-                    <td colspan="7">
-                        No students found.
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        let totalPresent = 0;
-        let totalAbsent = 0;
-        let totalLate = 0;
-
-        table.innerHTML = data.map(student => {
-            totalPresent += Number(student.present) || 0;
-            totalAbsent += Number(student.absent) || 0;
-            totalLate += Number(student.late) || 0;
-
-            const photo = student.photo
-                ? `
-                    <img
-                        src="${escapeHTML(student.photo)}"
-                        style="
-                            width:38px;
-                            height:38px;
-                            border-radius:50%;
-                            object-fit:cover;
-                        "
-                    >
-                `
-                : `
-                    <div style="
-                        width:38px;
-                        height:38px;
-                        border-radius:50%;
-                        display:inline-flex;
-                        align-items:center;
-                        justify-content:center;
-                        background:linear-gradient(
-                            135deg,
-                            #2563eb,
-                            #7c3aed
-                        );
-                        color:white;
-                        font-weight:700;
-                    ">
-                        ${escapeHTML(
-                            (student.name || "S")
-                                .charAt(0)
-                                .toUpperCase()
-                        )}
-                    </div>
-                `;
-
-            return `
-                <tr>
-                    <td>
-                        <div style="
-                            display:flex;
-                            align-items:center;
-                            gap:10px;
-                        ">
-                            ${photo}
-                            <strong>
-                                ${escapeHTML(student.name)}
-                            </strong>
-                        </div>
-                    </td>
-
-                    <td>
-                        ${escapeHTML(student.className)}
-                    </td>
-
-                    <td>${student.present}</td>
-                    <td>${student.absent}</td>
-                    <td>${student.late}</td>
-                    <td>${student.total}</td>
-
-                    <td>
-                        <strong>
-                            ${student.percentage}%
-                        </strong>
-                    </td>
-                </tr>
-            `;
-        }).join("");
-
-        summary.textContent =
-            `Present: ${totalPresent} | ` +
-            `Absent: ${totalAbsent} | ` +
-            `Late: ${totalLate}`;
-
-    } catch (error) {
-        console.error(
-            "MONTHLY ATTENDANCE ERROR:",
-            error
-        );
-
-        table.innerHTML = `
-            <tr>
-                <td colspan="7">
-                    Failed to load monthly attendance.
-                </td>
-            </tr>
-        `;
-    }
-}
-
-window.createMonthlyAttendanceSection =
-    createMonthlyAttendanceSection;
-
-window.loadMonthlyAttendance =
-    loadMonthlyAttendance;
-
-/* Create monthly attendance when the page loads */
-document.addEventListener("DOMContentLoaded", () => {
-    createMonthlyAttendanceSection();
-});
-
+console.log(
+    "Login and registration are disabled."
+);
