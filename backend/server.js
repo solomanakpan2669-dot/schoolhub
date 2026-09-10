@@ -2,11 +2,11 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 
-const studentsRouter = require("./routes/students");
-const teachersRouter = require("./routes/teachers");
-const classesRouter = require("./routes/classes");
-const schoolsRouter = require("./routes/schools");
-const attendanceRouter = require("./routes/attendance");
+const studentsRouter = require("../routes/students");
+const teachersRouter = require("../routes/teachers");
+const classesRouter = require("../routes/classes");
+const schoolsRouter = require("../routes/schools");
+const attendanceRouter = require("../routes/attendance");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -38,7 +38,7 @@ app.use("/api/attendance", attendanceRouter);
 
 app.use(
     express.static(
-        path.join(__dirname, "frontend")
+        path.join(__dirname, "../frontend")
     )
 );
 
@@ -46,7 +46,7 @@ app.get("/", (req, res) => {
     res.sendFile(
         path.join(
             __dirname,
-            "frontend",
+            "../frontend",
             "index.html"
         )
     );
