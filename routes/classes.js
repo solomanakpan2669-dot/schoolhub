@@ -3,116 +3,91 @@ const db = require("../database/database");
 
 const router = express.Router();
 
-function getSchoolId() {
-    return 1;
-}
-
-// GET ALL CLASSES FOR LOGGED-IN SCHOOL
+// Get all classes
 router.get("/", (req, res) => {
     try {
-        const schoolId = getSchoolId(req, res);
-        if (!schoolId) return;
-
-        const classes = db
-            .prepare(`
-                SELECT id, name, teacher, room
-                FROM classes
-                WHERE schoolId = ?
-                ORDER BY id DESC
-            `)
-            .all(schoolId);
+        const classes = db.prepare(`
+            SELECT id, name, teacher, room
+            FROM classes
+            ORDER BY id DESC
+        `).all();
 
         res.json(classes);
-
     } catch (error) {
         console.error("GET CLASSES ERROR:", error);
 
         res.status(500).json({
-            error: "Failed to get classes"
+            error: "Failed to get classes",
+            details: error.message
         });
     }
 });
 
-// GET ONE CLASS
+// Get one class
 router.get("/:id", (req, res) => {
     try {
-        const schoolId = getSchoolId(req, res);
-        if (!schoolId) return;
-
-        const classItem = db
-            .prepare(`
-                SELECT id, name, teacher, room
-                FROM classes
-                WHERE id = ? AND schoolId = ?
-            `)
-            .get(
-                req.params.id,
-                schoolId
-            );
+        const classItem = db.prepare(`
+            SELECT id, name, teacher, room
+            FROM classes
+            WHERE id = ?
+        `).get(req.params.id);
 
         if (!classItem) {
             return res.status(404).json({
-                error: "Class not found"
+                message: "Class not found"
             });
         }
 
         res.json(classItem);
-
     } catch (error) {
         console.error("GET CLASS ERROR:", error);
 
         res.status(500).json({
-            error: "Failed to get class"
+            error: "Failed to get class",
+            details: error.message
         });
     }
 });
 
-// ADD CLASS
+// Add a class
 router.post("/", (req, res) => {
     try {
-        const schoolId = getSchoolId(req, res);
-        if (!schoolId) return;
+        const {
+            name,
+            teacher = "",
+            room = "",
+            section = ""
+        } = req.body;
 
-        const body = req.body || {};
-
-        const name = body.name;
-        const teacher = body.teacher;
-        const room = body.room;
-
-        if (!name || !teacher || !room) {
+        if (!name || !name.trim()) {
             return res.status(400).json({
-                error: "Class name, teacher and room are required"
+                error: "Class name is required"
             });
         }
 
-        const result = db
-            .prepare(`
-                INSERT INTO classes
-                (schoolId, name, teacher, room)
-                VALUES (?, ?, ?, ?)
-            `)
-            .run(
-                schoolId,
-                name,
-                teacher,
-                room
-            );
+        const result = db.prepare(`
+            INSERT INTO classes
+            (name, section, teacher, room)
+            VALUES (?, ?, ?, ?)
+        `).run(
+            name.trim(),
+            section || "",
+            teacher || "",
+            room || ""
+        );
 
-        const classItem = db
-            .prepare(`
-                SELECT id, name, teacher, room
-                FROM classes
-                WHERE id = ? AND schoolId = ?
-            `)
-            .get(
-                result.lastInsertRowid,
-                schoolId
-            );
+        const newClass = db.prepare(`
+            SELECT id, name, teacher, room
+            FROM classes
+            WHERE id = ?
+        `).get(result.lastInsertRowid);
 
-        res.status(201).json(classItem);
-
+        res.status(201).json({
+            message: "Class added successfully",
+            class: newClass
+        });
     } catch (error) {
-        console.error("ADD CLASS ERROR:", error);
+        console.error("SAVE CLASS ERROR:", error);
 
         res.status(500).json({
             error: "Failed to add class",
@@ -121,70 +96,53 @@ router.post("/", (req, res) => {
     }
 });
 
-// UPDATE CLASS
+// Update a class
 router.put("/:id", (req, res) => {
     try {
-        const schoolId = getSchoolId(req, res);
-        if (!schoolId) return;
+        const {
+            name,
+            teacher = "",
+            room = "",
+            section = ""
+        } = req.body;
 
-        const id = req.params.id;
-        const body = req.body || {};
-
-        const name = body.name;
-        const teacher = body.teacher;
-        const room = body.room;
-
-        if (!name || !teacher || !room) {
+        if (!name || !name.trim()) {
             return res.status(400).json({
-                error: "Class name, teacher and room are required"
+                error: "Class name is required"
             });
         }
 
-        const existingClass = db
-            .prepare(`
-                SELECT id
-                FROM classes
-                WHERE id = ? AND schoolId = ?
-            `)
-            .get(
-                id,
-                schoolId
-            );
-
-        if (!existingClass) {
-            return res.status(404).json({
-                error: "Class not found"
-            });
-        }
-
-        db.prepare(`
+        const result = db.prepare(`
             UPDATE classes
             SET name = ?,
+                section = ?,
                 teacher = ?,
                 room = ?
             WHERE id = ?
-            AND schoolId = ?
         `).run(
-            name,
-            teacher,
-            room,
-            id,
-            schoolId
+            name.trim(),
+            section || "",
+            teacher || "",
+            room || "",
+            req.params.id
         );
 
-        const updatedClass = db
-            .prepare(`
-                SELECT id, name, teacher, room
-                FROM classes
-                WHERE id = ? AND schoolId = ?
-            `)
-            .get(
-                id,
-                schoolId
-            );
+        if (result.changes === 0) {
+            return res.status(404).json({
+                message: "Class not found"
+            });
+        }
 
-        res.json(updatedClass);
+        const updatedClass = db.prepare(`
+            SELECT id, name, teacher, room
+            FROM classes
+            WHERE id = ?
+        `).get(req.params.id);
 
+        res.json({
+            message: "Class updated successfully",
+            class: updatedClass
+        });
     } catch (error) {
         console.error("UPDATE CLASS ERROR:", error);
 
@@ -195,37 +153,29 @@ router.put("/:id", (req, res) => {
     }
 });
 
-// DELETE CLASS
+// Delete a class
 router.delete("/:id", (req, res) => {
     try {
-        const schoolId = getSchoolId(req, res);
-        if (!schoolId) return;
-
-        const result = db
-            .prepare(`
-                DELETE FROM classes
-                WHERE id = ? AND schoolId = ?
-            `)
-            .run(
-                req.params.id,
-                schoolId
-            );
+        const result = db.prepare(`
+            DELETE FROM classes
+            WHERE id = ?
+        `).run(req.params.id);
 
         if (result.changes === 0) {
             return res.status(404).json({
-                error: "Class not found"
+                message: "Class not found"
             });
         }
 
         res.json({
             message: "Class deleted successfully"
         });
-
     } catch (error) {
         console.error("DELETE CLASS ERROR:", error);
 
         res.status(500).json({
-            error: "Failed to delete class"
+            error: "Failed to delete class",
+            details: error.message
         });
     }
 });
