@@ -87,30 +87,192 @@ function showNotification(message, type = "success", title = "") {
 function schoolAlert(message) {
 
     const text = String(message || "");
+    const lower = text.toLowerCase();
 
     let title = "Success";
+    let messageText = "Your request was completed successfully.";
     let type = "success";
 
+    /* STUDENTS */
+
     if (
-        text.toLowerCase().includes("error") ||
-        text.toLowerCase().includes("failed") ||
-        text.toLowerCase().includes("unable") ||
-        text.toLowerCase().includes("invalid")
+        lower.includes("student") &&
+        (
+            lower.includes("added") ||
+            lower.includes("created")
+        )
     ) {
-        title = "Error";
-        type = "error";
+        title = "Student Added";
+        messageText = "The student has been added successfully.";
     }
 
     else if (
-        text.toLowerCase().includes("warning") ||
-        text.toLowerCase().includes("already") ||
-        text.toLowerCase().includes("required")
+        lower.includes("student") &&
+        (
+            lower.includes("updated") ||
+            lower.includes("update")
+        )
     ) {
-        title = "Please check";
+        title = "Student Updated";
+        messageText = "The student information has been updated successfully.";
+    }
+
+    else if (
+        lower.includes("student") &&
+        (
+            lower.includes("deleted") ||
+            lower.includes("removed")
+        )
+    ) {
+        title = "Student Deleted";
+        messageText = "The student has been removed successfully.";
+    }
+
+    /* TEACHERS */
+
+    else if (
+        lower.includes("teacher") &&
+        (
+            lower.includes("added") ||
+            lower.includes("created")
+        )
+    ) {
+        title = "Teacher Added";
+        messageText = "The teacher has been added successfully.";
+    }
+
+    else if (
+        lower.includes("teacher") &&
+        (
+            lower.includes("updated") ||
+            lower.includes("update")
+        )
+    ) {
+        title = "Teacher Updated";
+        messageText = "The teacher information has been updated successfully.";
+    }
+
+    else if (
+        lower.includes("teacher") &&
+        (
+            lower.includes("deleted") ||
+            lower.includes("removed")
+        )
+    ) {
+        title = "Teacher Deleted";
+        messageText = "The teacher has been removed successfully.";
+    }
+
+    /* CLASSES */
+
+    else if (
+        lower.includes("class") &&
+        (
+            lower.includes("added") ||
+            lower.includes("created")
+        )
+    ) {
+        title = "Class Added";
+        messageText = "The class has been added successfully.";
+    }
+
+    else if (
+        lower.includes("class") &&
+        (
+            lower.includes("updated") ||
+            lower.includes("update")
+        )
+    ) {
+        title = "Class Updated";
+        messageText = "The class information has been updated successfully.";
+    }
+
+    else if (
+        lower.includes("class") &&
+        (
+            lower.includes("deleted") ||
+            lower.includes("removed")
+        )
+    ) {
+        title = "Class Deleted";
+        messageText = "The class has been removed successfully.";
+    }
+
+    /* ATTENDANCE */
+
+    else if (
+        lower.includes("attendance") &&
+        (
+            lower.includes("saved") ||
+            lower.includes("success")
+        )
+    ) {
+        title = "Attendance Saved";
+        messageText = "Student attendance has been saved successfully.";
+    }
+
+    else if (
+        lower.includes("monthly") &&
+        lower.includes("attendance")
+    ) {
+        title = "Monthly Report Ready";
+        messageText = "The monthly attendance report has been loaded.";
+        type = "info";
+    }
+
+    /* LOGIN */
+
+    else if (
+        lower.includes("login") &&
+        (
+            lower.includes("success") ||
+            lower.includes("successful")
+        )
+    ) {
+        title = "Welcome Back";
+        messageText = "You have logged in successfully.";
+    }
+
+    /* ERRORS */
+
+    else if (
+        lower.includes("error") ||
+        lower.includes("failed") ||
+        lower.includes("unable") ||
+        lower.includes("invalid") ||
+        lower.includes("cannot")
+    ) {
+        title = "Operation Failed";
+        messageText = "We couldn't complete that request. Please try again.";
+        type = "error";
+    }
+
+    /* WARNINGS */
+
+    else if (
+        lower.includes("already") ||
+        lower.includes("required") ||
+        lower.includes("warning")
+    ) {
+        title = "Please Check";
+        messageText = text;
         type = "warning";
     }
 
-    showNotification(text, type, title);
+    /*
+     * If no special message was recognized,
+     * still show the original message professionally.
+     */
+
+    else if (text) {
+        messageText = text;
+    }
+
+    showNotification(
+        messageText,
+        type,
+        title
+    );
 }
 
 
