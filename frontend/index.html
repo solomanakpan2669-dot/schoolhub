@@ -4,18 +4,340 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>School Management System</title>
+    <title>SchoolConnect</title>
 
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:,">
 </head>
 
 <body>
 
+<!-- =====================================================
+     LOGIN SCREEN
+====================================================== -->
+
+<section id="loginScreen" class="login-screen">
+
+    <div class="login-card">
+
+        <div class="login-logo">
+            🏫
+        </div>
+
+        <h1>SchoolConnect</h1>
+
+        <p class="login-subtitle">
+            School Management System
+        </p>
+
+
+        <!-- LOGIN TYPE -->
+
+        <div class="login-type-buttons">
+
+            <button
+                type="button"
+                id="schoolLoginButton"
+                class="login-type-button active"
+                onclick="selectLoginType('school')">
+                🏫 School
+            </button>
+
+            <button
+                type="button"
+                id="teacherLoginButton"
+                class="login-type-button"
+                onclick="selectLoginType('teacher')">
+                👨‍🏫 Teacher
+            </button>
+
+        </div>
+
+
+        <!-- SCHOOL LOGIN -->
+
+        <form id="schoolLoginForm">
+
+            <label for="schoolCode">
+                School Code
+            </label>
+
+            <input
+                type="text"
+                id="schoolCode"
+                placeholder="e.g. ABC-12345"
+                autocomplete="username"
+                required
+            >
+
+
+            <label for="schoolPassword">
+                Password
+            </label>
+
+            <input
+                type="password"
+                id="schoolPassword"
+                placeholder="Enter school password"
+                autocomplete="current-password"
+                required
+            >
+
+
+            <button
+                type="submit"
+                class="primary-button login-submit-button">
+                🏫 Login as School
+            </button>
+
+        </form>
+
+
+        <!-- TEACHER LOGIN -->
+
+        <form
+            id="teacherLoginForm"
+            style="display:none;"
+        >
+
+            <label for="teacherLoginEmail">
+                Email
+            </label>
+
+            <input
+                type="email"
+                id="teacherLoginEmail"
+                placeholder="teacher@example.com"
+                autocomplete="username"
+                required
+            >
+
+
+            <label for="teacherLoginPassword">
+                Password
+            </label>
+
+            <input
+                type="password"
+                id="teacherLoginPassword"
+                placeholder="Enter teacher password"
+                autocomplete="current-password"
+                required
+            >
+
+
+            <button
+                type="submit"
+                class="primary-button login-submit-button">
+                👨‍🏫 Login as Teacher
+            </button>
+
+        </form>
+
+
+        <!-- LOGIN MESSAGE -->
+
+        <div
+            id="loginMessage"
+            class="login-message"
+        ></div>
+
+
+        <p class="login-help">
+            Use your school account or teacher account to continue.
+        </p>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     TEACHER DASHBOARD
+====================================================== -->
+
+<section
+    id="teacherDashboard"
+    style="display:none;"
+>
+
+    <header class="topbar">
+
+        <div>
+            <h1>👨‍🏫 Teacher Dashboard</h1>
+
+            <p id="teacherWelcome">
+                Welcome, Teacher
+            </p>
+        </div>
+
+
+        <button
+            type="button"
+            class="logout-button"
+            onclick="logout()">
+            🚪 Logout
+        </button>
+
+    </header>
+
+
+    <main class="container">
+
+        <section class="dashboard">
+
+            <div class="card">
+
+                <div class="card-icon">
+                    👨‍🏫
+                </div>
+
+                <div>
+                    <h2 id="teacherDashboardName">
+                        Teacher
+                    </h2>
+
+                    <p id="teacherDashboardSubject">
+                        Subject
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="card-icon">
+                    🏫
+                </div>
+
+                <div>
+                    <h2 id="teacherDashboardClass">
+                        No Class
+                    </h2>
+
+                    <p>
+                        Assigned Class
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="card-icon">
+                    👨‍🎓
+                </div>
+
+                <div>
+                    <h2 id="teacherStudentCount">
+                        0
+                    </h2>
+
+                    <p>
+                        My Students
+                    </p>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- TEACHER INFORMATION -->
+
+        <section class="section active">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>My Class</h2>
+
+                    <p>
+                        Students in your assigned class
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div
+                id="teacherClassInfo"
+                style="
+                    padding:20px;
+                    margin-bottom:20px;
+                    border-radius:12px;
+                    background:#f3f4f6;
+                "
+            >
+                Loading class information...
+            </div>
+
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Age</th>
+                            <th>Class</th>
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="teacherStudentsTable">
+
+                        <tr>
+                            <td colspan="4">
+                                Loading students...
+                            </td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</section>
+
+
+<!-- =====================================================
+     SCHOOL DASHBOARD
+====================================================== -->
+
+<section
+    id="schoolDashboard"
+>
+
 <header class="topbar">
+
     <div>
         <h1>🏫 School Management System</h1>
-        <p>Manage students, teachers and classes</p>
+
+        <p id="schoolWelcome">
+            Manage students, teachers and classes
+        </p>
     </div>
+
+
+    <button
+        type="button"
+        class="logout-button"
+        onclick="logout()">
+        🚪 Logout
+    </button>
+
 </header>
 
 
@@ -26,32 +348,44 @@
     <section class="dashboard">
 
         <div class="card">
-            <div class="card-icon">👨‍🎓</div>
+
+            <div class="card-icon">
+                👨‍🎓
+            </div>
 
             <div>
                 <h2 id="studentCount">0</h2>
                 <p>Students</p>
             </div>
+
         </div>
 
 
         <div class="card">
-            <div class="card-icon">👨‍🏫</div>
+
+            <div class="card-icon">
+                👨‍🏫
+            </div>
 
             <div>
                 <h2 id="teacherCount">0</h2>
                 <p>Teachers</p>
             </div>
+
         </div>
 
 
         <div class="card">
-            <div class="card-icon">🏫</div>
+
+            <div class="card-icon">
+                🏫
+            </div>
 
             <div>
                 <h2 id="classCount">0</h2>
                 <p>Classes</p>
             </div>
+
         </div>
 
     </section>
@@ -297,7 +631,6 @@
 </main>
 
 
-
 <!-- =========================
      ADD / EDIT STUDENT
 ========================== -->
@@ -371,7 +704,6 @@
 </div>
 
 
-
 <!-- =========================
      STUDENT PROFILE
 ========================== -->
@@ -386,8 +718,6 @@
         "
     >
 
-        <!-- CLOSE -->
-
         <button
             type="button"
             class="close-button"
@@ -400,8 +730,6 @@
             👨‍🎓 Student Profile
         </h2>
 
-
-        <!-- PHOTO AREA -->
 
         <div
             id="profileStudentAvatar"
@@ -420,11 +748,8 @@
                 font-weight:bold;
                 border:5px solid #e5e7eb;
             "
-        >
-        </div>
+        ></div>
 
-
-        <!-- UPLOAD AREA -->
 
         <div
             style="
@@ -437,12 +762,7 @@
             "
         >
 
-            <div
-                style="
-                    font-size:30px;
-                    margin-bottom:8px;
-                "
-            >
+            <div style="font-size:30px;margin-bottom:8px;">
                 📷
             </div>
 
@@ -469,8 +789,6 @@
             </p>
 
 
-            <!-- REAL FILE INPUT -->
-
             <input
                 type="file"
                 id="studentPhotoUpload"
@@ -478,8 +796,6 @@
                 style="display:none;"
             >
 
-
-            <!-- VISIBLE UPLOAD BUTTON -->
 
             <button
                 type="button"
@@ -492,19 +808,13 @@
         </div>
 
 
-        <!-- NAME -->
-
         <h2
             id="profileStudentName"
-            style="
-                margin:10px 0 20px;
-            "
+            style="margin:10px 0 20px;"
         >
             Student
         </h2>
 
-
-        <!-- PROFILE INFORMATION -->
 
         <div
             style="
@@ -577,8 +887,6 @@
         </div>
 
 
-        <!-- PHOTO BUTTONS -->
-
         <div
             style="
                 display:flex;
@@ -608,8 +916,6 @@
 
         </div>
 
-
-        <!-- PROFILE ACTIONS -->
 
         <div
             style="
@@ -655,7 +961,6 @@
     </div>
 
 </div>
-
 
 
 <!-- =========================
@@ -730,6 +1035,30 @@
             >
 
 
+            <label for="teacherPassword">
+                Password
+            </label>
+
+            <input
+                type="password"
+                id="teacherPassword"
+                placeholder="At least 6 characters"
+                minlength="6"
+            >
+
+            <small
+                id="teacherPasswordHelp"
+                style="
+                    display:block;
+                    margin-top:-6px;
+                    margin-bottom:14px;
+                    color:#6b7280;
+                "
+            >
+                Set a password so the teacher can log in.
+            </small>
+
+
             <button
                 type="submit"
                 class="primary-button">
@@ -741,7 +1070,6 @@
     </div>
 
 </div>
-
 
 
 <!-- =========================
@@ -814,7 +1142,6 @@
     </div>
 
 </div>
-
 
 
 <!-- JAVASCRIPT -->
