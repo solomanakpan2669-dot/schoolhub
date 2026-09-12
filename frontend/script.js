@@ -3036,6 +3036,11 @@ async function loadAttendance() {
             error
         );
 
+        alert(
+            "ATTENDANCE ERROR: " +
+            (error?.message || error)
+        );
+
 
         table.innerHTML = `
 
