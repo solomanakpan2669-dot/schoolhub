@@ -4100,7 +4100,16 @@ document.head.appendChild(
 
 document.addEventListener(
     "DOMContentLoaded",
-    setupApplication
+    () => {
+        const loginScreen =
+            document.getElementById("loginScreen");
+
+        if (loginScreen) {
+            loginScreen.style.display = "none";
+        }
+
+        setupApplication();
+    }
 );
 
 
