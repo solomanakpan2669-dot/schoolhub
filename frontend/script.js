@@ -1,3 +1,119 @@
+
+/* =========================================================
+   PROFESSIONAL SCHOOL NOTIFICATIONS
+========================================================= */
+
+function showNotification(message, type = "success", title = "") {
+
+    let notification = document.getElementById("schoolNotification");
+
+    if (!notification) {
+
+        notification = document.createElement("div");
+
+        notification.id = "schoolNotification";
+
+        notification.innerHTML = `
+            <div id="schoolNotificationIcon"></div>
+
+            <div>
+                <div id="schoolNotificationTitle"></div>
+                <div id="schoolNotificationMessage"></div>
+            </div>
+
+            <button
+                type="button"
+                id="schoolNotificationClose"
+                aria-label="Close notification"
+            >
+                ×
+            </button>
+        `;
+
+        document.body.appendChild(notification);
+
+        document
+            .getElementById("schoolNotificationClose")
+            .onclick = () => {
+                notification.classList.remove("show");
+            };
+    }
+
+    const icon = document.getElementById("schoolNotificationIcon");
+    const titleElement =
+        document.getElementById("schoolNotificationTitle");
+    const messageElement =
+        document.getElementById("schoolNotificationMessage");
+
+    notification.className = "";
+
+    if (type === "error") {
+        icon.textContent = "✕";
+        titleElement.textContent = title || "Something went wrong";
+    } else if (type === "warning") {
+        icon.textContent = "⚠";
+        titleElement.textContent = title || "Warning";
+    } else if (type === "info") {
+        icon.textContent = "ℹ";
+        titleElement.textContent = title || "Information";
+    } else {
+        icon.textContent = "✓";
+        titleElement.textContent = title || "Success";
+    }
+
+    messageElement.textContent = message;
+
+    notification.classList.add(type);
+    
+    requestAnimationFrame(() => {
+        notification.classList.add("show");
+    });
+
+    clearTimeout(
+        window.schoolNotificationTimer
+    );
+
+    window.schoolNotificationTimer =
+        setTimeout(() => {
+
+            notification.classList.remove("show");
+
+        }, 4000);
+}
+
+
+/* Replace browser alerts with professional notifications */
+
+function schoolAlert(message) {
+
+    const text = String(message || "");
+
+    let title = "Success";
+    let type = "success";
+
+    if (
+        text.toLowerCase().includes("error") ||
+        text.toLowerCase().includes("failed") ||
+        text.toLowerCase().includes("unable") ||
+        text.toLowerCase().includes("invalid")
+    ) {
+        title = "Error";
+        type = "error";
+    }
+
+    else if (
+        text.toLowerCase().includes("warning") ||
+        text.toLowerCase().includes("already") ||
+        text.toLowerCase().includes("required")
+    ) {
+        title = "Please check";
+        type = "warning";
+    }
+
+    showNotification(text, type, title);
+}
+
+
 /* =========================================================
    SCHOOL MANAGEMENT SYSTEM
    COMPLETE FRONTEND SCRIPT
@@ -331,7 +447,7 @@ async function addStudent(event) {
 
     if (!name || !age || !className) {
 
-        alert(
+        schoolAlert(
             "Please fill in all student fields."
         );
 
@@ -362,7 +478,7 @@ async function addStudent(event) {
             })
         });
 
-        alert(
+        schoolAlert(
             editing
                 ? "Student updated successfully."
                 : "Student added successfully."
@@ -391,7 +507,7 @@ async function addStudent(event) {
             error
         );
 
-        alert(error.message);
+        schoolAlert(error.message);
     }
 }
 
@@ -407,7 +523,7 @@ function editStudent(id) {
 
     if (!student) {
 
-        alert(
+        schoolAlert(
             "Student not found."
         );
 
@@ -482,7 +598,7 @@ async function deleteStudent(id) {
             }
         );
 
-        alert(
+        schoolAlert(
             "Student deleted successfully."
         );
 
@@ -495,7 +611,7 @@ async function deleteStudent(id) {
             error
         );
 
-        alert(error.message);
+        schoolAlert(error.message);
     }
 }
 
@@ -741,7 +857,7 @@ function viewStudent(id) {
 
     if (!student) {
 
-        alert(
+        schoolAlert(
             "Student not found."
         );
 
@@ -760,7 +876,7 @@ function viewStudent(id) {
 
     if (!modal) {
 
-        alert(
+        schoolAlert(
             "Could not create student profile window."
         );
 
@@ -1055,7 +1171,7 @@ async function uploadStudentPhoto() {
 
     if (!id) {
 
-        alert(
+        schoolAlert(
             "Please open a student profile first."
         );
 
@@ -1071,7 +1187,7 @@ async function uploadStudentPhoto() {
         !file.type.startsWith("image/")
     ) {
 
-        alert(
+        schoolAlert(
             "Please select an image file."
         );
 
@@ -1131,7 +1247,7 @@ async function uploadStudentPhoto() {
             error
         );
 
-        alert(error.message);
+        schoolAlert(error.message);
     }
 }
 
@@ -1195,7 +1311,7 @@ async function removeStudentPhoto(id = null) {
             error
         );
 
-        alert(error.message);
+        schoolAlert(error.message);
     }
 }
 
@@ -1419,7 +1535,7 @@ function editTeacher(id) {
 
     if (!teacher) {
 
-        alert(
+        schoolAlert(
             "Teacher not found."
         );
 
@@ -1523,7 +1639,7 @@ async function saveTeacher(event) {
         !email
     ) {
 
-        alert(
+        schoolAlert(
             "Please fill in all teacher fields."
         );
 
@@ -1562,7 +1678,7 @@ async function saveTeacher(event) {
         );
 
 
-        alert(
+        schoolAlert(
             editing
                 ? "Teacher updated successfully."
                 : "Teacher added successfully."
@@ -1605,7 +1721,7 @@ async function saveTeacher(event) {
             error
         );
 
-        alert(error.message);
+        schoolAlert(error.message);
     }
 }
 
@@ -1642,7 +1758,7 @@ async function deleteTeacher(id) {
         );
 
 
-        alert(
+        schoolAlert(
             "Teacher deleted successfully."
         );
 
@@ -1656,7 +1772,7 @@ async function deleteTeacher(id) {
             error
         );
 
-        alert(error.message);
+        schoolAlert(error.message);
     }
 }
 
@@ -1677,7 +1793,7 @@ function viewTeacher(id) {
 
     if (!teacher) {
 
-        alert(
+        schoolAlert(
             "Teacher not found."
         );
 
@@ -2008,7 +2124,7 @@ function editClass(id) {
 
     if (!item) {
 
-        alert(
+        schoolAlert(
             "Class not found."
         );
 
@@ -2103,7 +2219,7 @@ async function saveClass(event) {
 
     if (!name) {
 
-        alert(
+        schoolAlert(
             "Please enter a class name."
         );
 
@@ -2141,7 +2257,7 @@ async function saveClass(event) {
         );
 
 
-        alert(
+        schoolAlert(
             editing
                 ? "Class updated successfully."
                 : "Class added successfully."
@@ -2184,7 +2300,7 @@ async function saveClass(event) {
             error
         );
 
-        alert(error.message);
+        schoolAlert(error.message);
     }
 }
 
@@ -2222,7 +2338,7 @@ async function deleteClass(id) {
         );
 
 
-        alert(
+        schoolAlert(
             "Class deleted successfully."
         );
 
@@ -2236,7 +2352,7 @@ async function deleteClass(id) {
             error
         );
 
-        alert(error.message);
+        schoolAlert(error.message);
     }
 }
 
@@ -2440,67 +2556,41 @@ function showSection(name) {
 
 function createAttendanceSection() {
 
-    if (
-        getElement("attendance")
-    ) {
+    if (getElement("attendance")) {
         return;
     }
 
-
-    const nav =
-        document.querySelector("nav");
-
+    const nav = document.querySelector("nav");
 
     if (nav) {
+        const button = document.createElement("button");
 
-        const button =
-            document.createElement(
-                "button"
-            );
+        button.className = "tab-button";
+        button.textContent = "📋 Attendance";
+        button.type = "button";
 
-        button.className =
-            "tab-button";
+        button.onclick = () => showSection("attendance");
 
-        button.textContent =
-            "📋 Attendance";
-
-        button.type =
-            "button";
-
-        button.onclick =
-            () =>
-                showSection(
-                    "attendance"
-                );
-
-        nav.appendChild(
-            button
-        );
+        nav.appendChild(button);
     }
 
+    /*
+     * IMPORTANT:
+     * Do NOT place this section inside #teacherDashboard.
+     * The teacher dashboard can be hidden, which would make
+     * Attendance have a 0 x 0 size.
+     */
 
-    const main =
-        document.querySelector("main");
+    const container =
+        document.querySelector("main.container") ||
+        document.querySelector("main") ||
+        document.body;
 
+    const section = document.createElement("section");
 
-    if (!main) return;
-
-
-    const section =
-        document.createElement(
-            "section"
-        );
-
-
-    section.id =
-        "attendance";
-
-    section.className =
-        "section";
-
-    section.style.display =
-        "none";
-
+    section.id = "attendance";
+    section.className = "section";
+    section.style.display = "none";
 
     section.innerHTML = `
 
@@ -2508,9 +2598,7 @@ function createAttendanceSection() {
 
             <div>
 
-                <h2>
-                    Attendance
-                </h2>
+                <h2>Attendance</h2>
 
                 <p>
                     Mark and manage student attendance
@@ -2519,7 +2607,6 @@ function createAttendanceSection() {
             </div>
 
         </div>
-
 
         <div
             style="
@@ -2555,7 +2642,6 @@ function createAttendanceSection() {
 
         </div>
 
-
         <div
             id="attendanceSummary"
             style="
@@ -2563,7 +2649,6 @@ function createAttendanceSection() {
                 font-weight:600;
             "
         ></div>
-
 
         <div style="overflow-x:auto;">
 
@@ -2573,26 +2658,17 @@ function createAttendanceSection() {
 
                     <tr>
 
-                        <th>
-                            Student
-                        </th>
+                        <th>Student</th>
 
-                        <th>
-                            Class
-                        </th>
+                        <th>Class</th>
 
-                        <th>
-                            Status
-                        </th>
+                        <th>Status</th>
 
                     </tr>
 
                 </thead>
 
-
-                <tbody
-                    id="attendanceTable"
-                >
+                <tbody id="attendanceTable">
 
                     <tr>
 
@@ -2608,7 +2684,6 @@ function createAttendanceSection() {
 
         </div>
 
-
         <div style="margin-top:20px;">
 
             <button
@@ -2622,20 +2697,11 @@ function createAttendanceSection() {
         </div>
     `;
 
+    container.appendChild(section);
 
-    main.appendChild(
-        section
-    );
-
-
-    const dateInput =
-        getElement(
-            "attendanceDate"
-        );
-
+    const dateInput = getElement("attendanceDate");
 
     if (dateInput) {
-
         dateInput.value =
             new Date()
                 .toISOString()
@@ -2671,7 +2737,7 @@ async function loadAttendance() {
 
     if (!date) {
 
-        alert(
+        schoolAlert(
             "Please select a date."
         );
 
@@ -3024,7 +3090,7 @@ async function saveAttendance() {
         !dateInput.value
     ) {
 
-        alert(
+        schoolAlert(
             "Please select a date."
         );
 
@@ -3071,7 +3137,7 @@ async function saveAttendance() {
         );
 
 
-        alert(
+        schoolAlert(
             "Attendance saved successfully!"
         );
 
@@ -3085,7 +3151,7 @@ async function saveAttendance() {
             error
         );
 
-        alert(error.message);
+        schoolAlert(error.message);
     }
 }
 
@@ -3337,7 +3403,7 @@ async function loadMonthlyAttendance() {
 
     if (!month) {
 
-        alert(
+        schoolAlert(
             "Please select a month."
         );
 
