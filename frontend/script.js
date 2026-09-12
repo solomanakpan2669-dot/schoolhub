@@ -1,4 +1,17 @@
 
+// =========================================================
+// SHOW / HIDE PASSWORD
+// =========================================================
+
+function togglePassword(fieldId, checkbox) {
+    const field = document.getElementById(fieldId);
+
+    if (!field) return;
+
+    field.type = checkbox.checked ? "text" : "password";
+}
+
+
 /* =========================================================
    PROFESSIONAL SCHOOL NOTIFICATIONS
 ========================================================= */
@@ -1687,6 +1700,8 @@ function searchTeachers() {
 
 function editTeacher(id) {
 
+    populateTeacherClassOptions();
+
     const teacher =
         teachers.find(
             item =>
@@ -1721,6 +1736,9 @@ function editTeacher(id) {
     const email =
         getElement("teacherEmail");
 
+    const teacherClass =
+        getElement("teacherClass");
+
 
     if (name) {
         name.value =
@@ -1740,6 +1758,13 @@ function editTeacher(id) {
     if (email) {
         email.value =
             teacher.email || "";
+    }
+
+    if (teacherClass) {
+        teacherClass.value =
+            teacher.assignedClassId
+                ? String(teacher.assignedClassId)
+                : "";
     }
 
 
@@ -1793,6 +1818,14 @@ async function saveTeacher(event) {
             ?.value
             .trim() || "";
 
+    const assignedClassId =
+        getElement("teacherClass")
+            ?.value
+            ? Number(
+                getElement("teacherClass").value
+              )
+            : null;
+
 
     if (
         !name ||
@@ -1834,7 +1867,8 @@ async function saveTeacher(event) {
                     name,
                     age,
                     subject,
-                    email
+                    email,
+                    assignedClassId
                 })
             }
         );
@@ -2073,6 +2107,48 @@ function viewTeacher(id) {
 
 
 /* =========================================================
+   TEACHER ASSIGNED CLASS DROPDOWN
+========================================================= */
+
+function populateTeacherClassOptions() {
+
+    const select =
+        getElement("teacherClass");
+
+    if (!select) return;
+
+    const currentValue =
+        select.value;
+
+    select.innerHTML =
+        '<option value="">Not Assigned</option>';
+
+    classes.forEach(classItem => {
+
+        const option =
+            document.createElement("option");
+
+        option.value =
+            String(classItem.id);
+
+        option.textContent =
+            classItem.name +
+            (
+                classItem.section
+                    ? " - " + classItem.section
+                    : ""
+            );
+
+        select.appendChild(option);
+    });
+
+    if (currentValue) {
+        select.value = currentValue;
+    }
+}
+
+
+/* =========================================================
    CLASSES
 ========================================================= */
 
@@ -2107,6 +2183,8 @@ async function loadClasses() {
 
         allClasses =
             classes;
+
+        populateTeacherClassOptions();
 
 
         renderClasses();
@@ -2547,6 +2625,11 @@ function openModal(id) {
         "active",
         "show"
     );
+
+    // Populate teacher classes whenever the teacher modal opens.
+    if (id === "teacherModal") {
+        populateTeacherClassOptions();
+    }
 }
 
 
@@ -3981,7 +4064,17 @@ window.closeModal =
 
 window.showSection =
     showSection;
+window.loadAttendance =
+    loadAttendance;
 
+window.setAttendanceStatus =
+    setAttendanceStatus;
+
+window.saveAttendance =
+    saveAttendance;
+
+window.loadMonthlyAttendance =
+    loadMonthlyAttendance;
 
 window.createAttendanceSection =
     createAttendanceSection;
