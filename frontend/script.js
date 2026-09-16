@@ -495,18 +495,12 @@ function renderStudents(list = students) {
                 </td>
 
                 <td>
-                    <div class="student-name-cell">
-
-                        ${studentAvatar(student)}
-
-                        <span>
-                            ${escapeHTML(
-                                student.name ||
-                                "Unnamed"
-                            )}
-                        </span>
-
-                    </div>
+                    <span>
+                        ${escapeHTML(
+                            student.name ||
+                            "Unnamed"
+                        )}
+                    </span>
                 </td>
 
                 <td>
