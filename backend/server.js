@@ -55,6 +55,12 @@ app.get("/", (req, res) => {
 // ======================================================
 // START SERVER
 // ======================================================
+const announcementsRouter = require("../routes/announcements");
+const timetableRouter = require("../routes/timetable");
+
+app.use("/api/announcements", announcementsRouter);
+app.use("/api/timetable", timetableRouter);
+
 
 app.listen(PORT, () => {
     console.log(

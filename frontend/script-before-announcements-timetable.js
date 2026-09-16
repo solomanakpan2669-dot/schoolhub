@@ -2234,102 +2234,81 @@ function updateClassCount() {
 }
 
 
+function renderClasses(list = classes) {
 
-function renderClasses() {
+    const table =
+        getElement("classesTable");
 
-    const container =
-        document.getElementById("classesTableBody") ||
-        document.getElementById("classTableBody") ||
-        document.querySelector("#classes table tbody");
 
-    if (!container) {
-        console.log("Classes table body not found.");
+    if (!table) return;
+
+
+    if (!list.length) {
+
+        table.innerHTML =
+            '<tr><td colspan="5">No classes found.</td></tr>';
+
         return;
     }
 
-    container.innerHTML = "";
 
-    if (!classes || classes.length === 0) {
+    table.innerHTML =
+        list.map(item => `
 
-        container.innerHTML = `
             <tr>
-                <td colspan="5">
-                    No classes found.
+
+                <td>
+                    ${escapeHTML(item.id)}
                 </td>
+
+                <td>
+                    ${escapeHTML(
+                        item.name ||
+                        item.className ||
+                        ""
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHTML(
+                        item.teacher ||
+                        item.teacherName ||
+                        ""
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHTML(
+                        item.room ||
+                        item.roomNumber ||
+                        ""
+                    )}
+                </td>
+
+                <td>
+
+                    <button
+                        type="button"
+                        class="edit-btn"
+                        onclick="editClass(${Number(item.id)})"
+                    >
+                        Edit
+                    </button>
+
+                    <button
+                        type="button"
+                        class="delete-btn"
+                        onclick="deleteClass(${Number(item.id)})"
+                    >
+                        Delete
+                    </button>
+
+                </td>
+
             </tr>
-        `;
 
-        return;
-    }
-
-    classes.forEach(cls => {
-
-        const row = document.createElement("tr");
-
-        const id = cls.id || "";
-        const name = cls.name || cls.className || "";
-        const teacher =
-            cls.assignedTeacherName ||
-            cls.assignedTeacher ||
-            cls.teacher ||
-            "Not assigned";
-
-        const room = cls.room || "Not assigned";
-
-        row.innerHTML = `
-            <td>${id}</td>
-
-            <td>
-                <strong>${escapeClassDashboardHTML(name)}</strong>
-            </td>
-
-            <td>
-                ${escapeClassDashboardHTML(teacher)}
-            </td>
-
-            <td>
-                ${escapeClassDashboardHTML(room)}
-            </td>
-
-            <td>
-
-                <button
-                    type="button"
-                    class="class-dashboard-button"
-                    data-class-id="${id}">
-                    🏫 Open Dashboard
-                </button>
-
-                <button
-                    type="button"
-                    onclick="editClass(${id})">
-                    Edit
-                </button>
-
-                <button
-                    type="button"
-                    onclick="deleteClass(${id})">
-                    Delete
-                </button>
-
-            </td>
-        `;
-
-        container.appendChild(row);
-
-        const dashboardButton =
-            row.querySelector(".class-dashboard-button");
-
-        dashboardButton.addEventListener(
-            "click",
-            function () {
-                openClassDashboard(id);
-            }
-        );
-
-    });
+        `).join("");
 }
-
 
 
 function searchClasses() {
@@ -2684,15 +2663,21 @@ function showSection(name) {
         "students",
         "teachers",
         "classes",
-        "announcements",
-        "timetable",
-        "classDashboard",
         "attendance",
         "monthlyAttendance"
     ];
 
     if (!validSections.includes(name)) {
         return;
+    }
+
+    // Create attendance pages when clicked
+    if (name === "attendance") {
+        createAttendanceSection();
+    }
+
+    if (name === "monthlyAttendance") {
+        createMonthlyAttendanceSection();
     }
 
     // Hide all sections
@@ -2712,17 +2697,6 @@ function showSection(name) {
     selected.classList.add("active");
     selected.style.display = "block";
 
-    // Load data
-    if (name === "announcements") {
-        loadAnnouncements();
-    }
-
-    if (name === "timetable") {
-        setTimeout(() => {
-            loadTimetable();
-        }, 100);
-    }
-
     // Update active button
     document.querySelectorAll(".tab-button").forEach(button => {
 
@@ -2734,12 +2708,32 @@ function showSection(name) {
             (name === "students" && text.includes("students")) ||
             (name === "teachers" && text.includes("teachers")) ||
             (name === "classes" && text.includes("classes")) ||
-            (name === "announcements" && text.includes("announcements")) ||
-            (name === "timetable" && text.includes("timetable"))
+            (
+                name === "attendance" &&
+                text.includes("attendance") &&
+                !text.includes("monthly")
+            ) ||
+            (
+                name === "monthlyAttendance" &&
+                text.includes("monthly")
+            )
         ) {
             button.classList.add("active");
         }
     });
+
+    // Load normal sections
+    if (name === "students") {
+        loadStudents();
+    }
+
+    if (name === "teachers") {
+        loadTeachers();
+    }
+
+    if (name === "classes") {
+        loadClasses();
+    }
 }
 
 /* =========================================================
@@ -2933,16 +2927,36 @@ window.closeModal =
 
 window.showSection =
     showSection;
+window.loadAttendance =
+    loadAttendance;
+
+window.setAttendanceStatus =
+    setAttendanceStatus;
+
+window.saveAttendance =
+    saveAttendance;
+
+window.loadMonthlyAttendance =
+    loadMonthlyAttendance;
+
+window.createAttendanceSection =
+    createAttendanceSection;
+
+window.loadAttendance =
+    loadAttendance;
+
+window.saveAttendance =
+    saveAttendance;
+
+window.setAttendanceStatus =
+    setAttendanceStatus;
 
 
+window.createMonthlyAttendanceSection =
+    createMonthlyAttendanceSection;
 
-
-
-
-
-
-
-
+window.loadMonthlyAttendance =
+    loadMonthlyAttendance;
 
 
 /* =========================================================
@@ -3072,194 +3086,149 @@ console.log(
 
 function createAttendanceSection() {
 
-    let section = document.getElementById("attendance");
-
-    if (!section) {
-
-        const main =
-            document.querySelector("main.container") ||
-            document.querySelector("main") ||
-            document.body;
-
-        section = document.createElement("section");
-
-        section.id = "attendance";
-        section.className = "section";
-        section.style.display = "none";
-
-        section.innerHTML = `
-            <div class="section-header">
-                <div>
-                    <h2>📋 Daily Register</h2>
-                    <p id="attendanceClassInfo">
-                        Mark attendance for this class.
-                    </p>
-                </div>
-            </div>
-
-            <div style="margin:20px 0;">
-
-                <label>
-                    <strong>Date:</strong>
-                </label>
-
-                <input
-                    type="date"
-                    id="newAttendanceDate"
-                    style="
-                        padding:10px;
-                        margin-left:10px;
-                        border:1px solid #ccc;
-                        border-radius:8px;
-                    "
-                >
-
-                <button
-                    type="button"
-                    class="primary-button"
-                    id="loadAttendanceButton"
-                    style="margin-left:10px;"
-                >
-                    Load Attendance
-                </button>
-
-            </div>
-
-            <div id="newAttendanceMessage"></div>
-
-            <div style="
-                overflow-x:auto;
-                max-height:500px;
-                overflow-y:auto;
-            ">
-
-                <table>
-
-                    <thead>
-                        <tr>
-                            <th>Student</th>
-                            <th>Class</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-
-                    <tbody id="newAttendanceTable">
-                        <tr>
-                            <td colspan="3">
-                                Loading students...
-                            </td>
-                        </tr>
-                    </tbody>
-
-                </table>
-
-            </div>
-
-            <div style="margin-top:20px;">
-
-                <button
-                    type="button"
-                    class="primary-button"
-                    id="saveAttendanceButton"
-                >
-                    💾 Save Attendance
-                </button>
-
-            </div>
-
-            <div style="margin-top:15px;">
-
-                <button
-                    type="button"
-                    class="secondary-button"
-                    onclick="openClassDashboard(currentClassDashboardId)"
-                >
-                    ← Back to Class Dashboard
-                </button>
-
-            </div>
-        `;
-
-        main.appendChild(section);
-
-        const dateInput =
-            document.getElementById("newAttendanceDate");
-
-        if (dateInput) {
-            dateInput.value =
-                new Date().toISOString().slice(0, 10);
-        }
-
-        const loadButton =
-            document.getElementById("loadAttendanceButton");
-
-        if (loadButton) {
-            loadButton.addEventListener(
-                "click",
-                loadNewAttendance
-            );
-        }
-
-        const saveButton =
-            document.getElementById("saveAttendanceButton");
-
-        if (saveButton) {
-            saveButton.addEventListener(
-                "click",
-                saveNewAttendance
-            );
-        }
+    if (document.getElementById("attendance")) {
+        return;
     }
 
-    return section;
+    const nav = document.querySelector("nav.tabs");
+
+    if (nav && !document.getElementById("attendanceButton")) {
+
+        const button = document.createElement("button");
+
+        button.id = "attendanceButton";
+        button.type = "button";
+        button.className = "tab-button";
+        button.textContent = "📋 Attendance";
+
+        button.onclick = function () {
+            showSection("attendance");
+        };
+
+        nav.appendChild(button);
+    }
+
+    const main =
+        document.querySelector("main.container") ||
+        document.querySelector("main") ||
+        document.body;
+
+    const section = document.createElement("section");
+
+    section.id = "attendance";
+    section.className = "section";
+    section.style.display = "none";
+
+    section.innerHTML = `
+        <div class="section-header">
+            <div>
+                <h2>📋 Teacher Attendance</h2>
+                <p>Mark attendance for your students.</p>
+            </div>
+        </div>
+
+        <div style="margin:20px 0;">
+            <label>
+                <strong>Date:</strong>
+            </label>
+
+            <input
+                type="date"
+                id="newAttendanceDate"
+                style="
+                    padding:10px;
+                    margin-left:10px;
+                    border:1px solid #ccc;
+                    border-radius:8px;
+                "
+            >
+
+            <button
+                type="button"
+                class="primary-button"
+                id="loadAttendanceButton"
+                style="margin-left:10px;"
+            >
+                Load Attendance
+            </button>
+        </div>
+
+        <div id="newAttendanceMessage"></div>
+
+        <div style="overflow-x:auto;">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Class</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody id="newAttendanceTable">
+                    <tr>
+                        <td colspan="3">
+                            Loading students...
+                        </td>
+                    </tr>
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <div style="margin-top:20px;">
+
+            <button
+                type="button"
+                class="primary-button"
+                id="saveAttendanceButton"
+            >
+                💾 Save Attendance
+            </button>
+
+        </div>
+    `;
+
+    main.appendChild(section);
+
+    const dateInput =
+        document.getElementById("newAttendanceDate");
+
+    dateInput.value =
+        new Date().toISOString().slice(0, 10);
+
+    document
+        .getElementById("loadAttendanceButton")
+        .addEventListener("click", loadNewAttendance);
+
+    document
+        .getElementById("saveAttendanceButton")
+        .addEventListener("click", saveNewAttendance);
+
+    loadNewAttendance();
 }
 
 
 async function loadNewAttendance() {
 
-    const dateInput =
-        document.getElementById("newAttendanceDate");
+    const date =
+        document.getElementById("newAttendanceDate").value;
 
     const table =
         document.getElementById("newAttendanceTable");
-
-    if (!dateInput || !table) {
-        return;
-    }
-
-    const date = dateInput.value;
 
     if (!date) {
         schoolAlert("Please select a date.");
         return;
     }
 
-    const classId =
-        currentClassDashboardId;
-
-    const className =
-        currentClassDashboard?.name ||
-        currentClassDashboard?.className ||
-        "";
-
-    if (!classId) {
-        schoolAlert("No class selected.");
-        return;
-    }
-
-    const classInfo =
-        document.getElementById("attendanceClassInfo");
-
-    if (classInfo) {
-        classInfo.textContent =
-            "Mark attendance for " +
-            className.toUpperCase();
-    }
-
     table.innerHTML = `
         <tr>
             <td colspan="3">
-                Loading students...
+                Loading...
             </td>
         </tr>
     `;
@@ -3267,66 +3236,34 @@ async function loadNewAttendance() {
     try {
 
         const studentsData =
-            await getJSON(
-                `${API_URL}/students`
-            );
-
-        const students =
-            Array.isArray(studentsData)
-                ? studentsData.filter(student => {
-
-                    const studentClass =
-                        String(
-                            student.className || ""
-                        )
-                        .trim()
-                        .toLowerCase();
-
-                    return studentClass ===
-                        String(className)
-                            .trim()
-                            .toLowerCase();
-
-                })
-                : [];
+            await getJSON(`${API_URL}/students`);
 
         let attendanceData = [];
 
         try {
-
             attendanceData =
                 await getJSON(
-                    `${API_URL}/attendance?date=${encodeURIComponent(date)}&classId=${encodeURIComponent(classId)}&className=${encodeURIComponent(className)}`
+                    `${API_URL}/attendance?date=${encodeURIComponent(date)}`
                 );
-
         } catch (error) {
-
             console.warn(
                 "Attendance records could not be loaded:",
                 error
             );
-
         }
 
         const records = {};
 
-        if (Array.isArray(attendanceData)) {
+        attendanceData.forEach(record => {
+            records[record.studentId] = record.status;
+        });
 
-            attendanceData.forEach(record => {
-
-                records[record.studentId] =
-                    record.status;
-
-            });
-
-        }
-
-        if (!students.length) {
+        if (!studentsData.length) {
 
             table.innerHTML = `
                 <tr>
                     <td colspan="3">
-                        No students found in ${escapeHTML(className)}.
+                        No students found.
                     </td>
                 </tr>
             `;
@@ -3334,63 +3271,65 @@ async function loadNewAttendance() {
             return;
         }
 
-        table.innerHTML =
-            students.map(student => {
+        table.innerHTML = studentsData.map(student => {
 
-                const status =
-                    records[student.id] ||
-                    "Present";
+            const status =
+                records[student.id] || "Present";
 
-                return `
-                    <tr>
+            return `
+                <tr>
+                    <td>
+                        ${escapeHTML(student.name)}
+                    </td>
 
-                        <td>
-                            ${escapeHTML(student.name)}
-                        </td>
+                    <td>
+                        ${escapeHTML(student.className)}
+                    </td>
 
-                        <td>
-                            ${escapeHTML(student.className)}
-                        </td>
+                    <td>
 
-                        <td>
+                        <select
+                            class="attendance-status"
+                            data-student-id="${student.id}"
+                            style="
+                                padding:8px;
+                                border-radius:6px;
+                            "
+                        >
 
-                            <select
-                                class="attendance-status"
-                                data-student-id="${student.id}"
-                                style="
-                                    padding:8px;
-                                    border-radius:6px;
-                                "
+                            <option
+                                value="Present"
+                                ${status === "Present" ? "selected" : ""}
                             >
+                                Present
+                            </option>
 
-                                <option value="Present"
-                                    ${status === "Present" ? "selected" : ""}>
-                                    Present
-                                </option>
+                            <option
+                                value="Absent"
+                                ${status === "Absent" ? "selected" : ""}
+                            >
+                                Absent
+                            </option>
 
-                                <option value="Absent"
-                                    ${status === "Absent" ? "selected" : ""}>
-                                    Absent
-                                </option>
+                            <option
+                                value="Late"
+                                ${status === "Late" ? "selected" : ""}
+                            >
+                                Late
+                            </option>
 
-                                <option value="Late"
-                                    ${status === "Late" ? "selected" : ""}>
-                                    Late
-                                </option>
+                        </select>
 
-                            </select>
+                    </td>
+                </tr>
+            `;
 
-                        </td>
-
-                    </tr>
-                `;
-
-            }).join("");
+        }).join("");
 
     } catch (error) {
 
         console.error(
-            "CLASS ATTENDANCE ERROR:",
+            "NEW ATTENDANCE ERROR:",
             error
         );
 
@@ -3402,28 +3341,19 @@ async function loadNewAttendance() {
             </tr>
         `;
 
-        schoolAlert(
-            error.message
-        );
+        schoolAlert(error.message);
     }
 }
 
 
 async function saveNewAttendance() {
 
-    const dateInput =
-        document.getElementById("newAttendanceDate");
-
-    if (!dateInput) {
-        return;
-    }
-
     const date =
-        dateInput.value;
+        document.getElementById("newAttendanceDate").value;
 
     const selects =
         document.querySelectorAll(
-            "#newAttendanceTable .attendance-status"
+            ".attendance-status"
         );
 
     if (!date) {
@@ -3436,64 +3366,29 @@ async function saveNewAttendance() {
         return;
     }
 
-    const classId =
-        currentClassDashboardId;
-
-    const className =
-        currentClassDashboard?.name ||
-        currentClassDashboard?.className ||
-        "";
-
-    if (!classId) {
-        schoolAlert("No class selected.");
-        return;
-    }
-
     const records = [];
 
     selects.forEach(select => {
 
         records.push({
-
-            studentId:
-                Number(
-                    select.dataset.studentId
-                ),
-
-            status:
-                select.value,
-
-            classId:
-                Number(classId),
-
-            className:
-                className
-
+            studentId: Number(
+                select.dataset.studentId
+            ),
+            status: select.value
         });
 
     });
 
     try {
 
-        await getJSON(
-            `${API_URL}/attendance`,
-            {
-                method: "POST",
+        await getJSON(`${API_URL}/attendance`, {
+            method: "POST",
 
-                body: JSON.stringify({
-
-                    date,
-
-                    classId:
-                        Number(classId),
-
-                    className,
-
-                    records
-
-                })
-            }
-        );
+            body: JSON.stringify({
+                date,
+                records
+            })
+        });
 
         schoolAlert(
             "Attendance saved successfully."
@@ -3504,13 +3399,11 @@ async function saveNewAttendance() {
     } catch (error) {
 
         console.error(
-            "SAVE CLASS ATTENDANCE ERROR:",
+            "SAVE NEW ATTENDANCE ERROR:",
             error
         );
 
-        schoolAlert(
-            error.message
-        );
+        schoolAlert(error.message);
     }
 }
 
@@ -3523,6 +3416,24 @@ function createMonthlyAttendanceSection() {
 
     if (document.getElementById("monthlyAttendance")) {
         return;
+    }
+
+    const nav = document.querySelector("nav.tabs");
+
+    if (nav && !document.getElementById("monthlyAttendanceButton")) {
+
+        const button = document.createElement("button");
+
+        button.id = "monthlyAttendanceButton";
+        button.type = "button";
+        button.className = "tab-button";
+        button.textContent = "📊 Monthly Attendance";
+
+        button.onclick = function () {
+            showSection("monthlyAttendance");
+        };
+
+        nav.appendChild(button);
     }
 
     const main =
@@ -3726,1932 +3637,5 @@ async function loadNewMonthlyAttendance() {
 /* =========================================================
    START NEW ATTENDANCE
 ========================================================= */
-
-
-function initializeNewSections() {
-}
-
-if (document.readyState === "loading") {
-    document.addEventListener(
-        "DOMContentLoaded",
-        initializeNewSections
-    );
-} else {
-    initializeNewSections();
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-
-    const announcementDate =
-        document.getElementById("announcementDate");
-
-    if (announcementDate) {
-        announcementDate.value =
-            new Date().toISOString().split("T")[0];
-    }
-
-});
-
-
-async function saveAnnouncement() {
-
-    const titleElement =
-        document.getElementById("announcementTitle");
-
-    const messageElement =
-        document.getElementById("announcementMessage");
-
-    const dateElement =
-        document.getElementById("announcementDate");
-
-    const classElement =
-        document.getElementById("announcementClass");
-
-    const title =
-        titleElement
-            ? titleElement.value.trim()
-            : "";
-
-    const message =
-        messageElement
-            ? messageElement.value.trim()
-            : "";
-
-    const className =
-        classElement
-            ? classElement.value
-            : "";
-
-    let date =
-        dateElement
-            ? dateElement.value
-            : "";
-
-    if (!date) {
-
-        date =
-            new Date()
-                .toISOString()
-                .split("T")[0];
-
-        if (dateElement) {
-            dateElement.value = date;
-        }
-    }
-
-    if (!className) {
-
-        alert("Please select a class.");
-        return;
-    }
-
-    if (!title || !message) {
-
-        alert(
-            "Please enter an announcement title and message."
-        );
-
-        return;
-    }
-
-    try {
-
-        const response =
-            await fetch(
-                `${API_URL}/announcements`,
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        title: title,
-                        message: message,
-                        date: date,
-                        className: className
-                    })
-                }
-            );
-
-        const result =
-            await response.json();
-
-        if (!response.ok) {
-
-            alert(
-                result.error ||
-                "Failed to save announcement."
-            );
-
-            return;
-        }
-
-        if (titleElement) {
-            titleElement.value = "";
-        }
-
-        if (messageElement) {
-            messageElement.value = "";
-        }
-
-        await loadAnnouncements();
-
-        alert(
-            "Announcement saved for " +
-            className +
-            " successfully!"
-        );
-
-    } catch (error) {
-
-        console.error(
-            "ANNOUNCEMENT ERROR:",
-            error
-        );
-
-        alert(
-            "Could not connect to the server."
-        );
-    }
-}
-
-
-async function loadAnnouncements() {
-
-    const list =
-        document.getElementById(
-            "announcementsList"
-        );
-
-    if (!list) {
-        return;
-    }
-
-    const classElement =
-        document.getElementById(
-            "announcementViewClass"
-        );
-
-    const className =
-        classElement
-            ? classElement.value
-            : "";
-
-    try {
-
-        let url =
-            `${API_URL}/announcements`;
-
-        if (className) {
-
-            url +=
-                "?className=" +
-                encodeURIComponent(className);
-        }
-
-        const response =
-            await fetch(url);
-
-        const data =
-            await response.json();
-
-        if (!response.ok) {
-
-            throw new Error(
-                data.error ||
-                "Failed to load announcements"
-            );
-        }
-
-        if (!data.length) {
-
-            list.innerHTML = `
-                <p>
-                    No announcements for
-                    ${className || "this class"} yet.
-                </p>
-            `;
-
-            return;
-        }
-
-        list.innerHTML =
-            data.map(item => `
-
-                <div class="card">
-
-                    <h3>
-                        📢 ${item.title}
-                    </h3>
-
-                    <p>
-                        <strong>
-                            Class:
-                        </strong>
-                        ${item.className || "All Classes"}
-                    </p>
-
-                    <small>
-                        📅 ${item.date}
-                    </small>
-
-                    <p>
-                        ${item.message}
-                    </p>
-
-                    <button
-                        class="danger-button"
-                        onclick="deleteAnnouncement(${item.id})">
-                        🗑️ Delete
-                    </button>
-
-                </div>
-
-            `).join("");
-
-    } catch (error) {
-
-        console.error(
-            "LOAD ANNOUNCEMENTS ERROR:",
-            error
-        );
-
-        list.innerHTML =
-            "<p>Failed to load announcements.</p>";
-    }
-}
-
-
-async function deleteAnnouncement(id) {
-
-    if (
-        !confirm(
-            "Delete this announcement?"
-        )
-    ) {
-        return;
-    }
-
-    try {
-
-        const response =
-            await fetch(
-                `${API_URL}/announcements/${id}`,
-                {
-                    method: "DELETE"
-                }
-            );
-
-        const result =
-            await response.json();
-
-        if (!response.ok) {
-
-            alert(
-                result.error ||
-                "Failed to delete announcement."
-            );
-
-            return;
-        }
-
-        await loadAnnouncements();
-
-    } catch (error) {
-
-        console.error(
-            "DELETE ANNOUNCEMENT ERROR:",
-            error
-        );
-
-        alert(
-            "Could not connect to the server."
-        );
-    }
-}
-
-
-/* =========================================================
-   SCHOOL TIMETABLE
-========================================================= */
-
-const DEFAULT_TIMETABLE_PERIODS = [
-    "8:20 AM - 9:05 AM",
-    "9:05 AM - 9:50 AM",
-    "9:50 AM - 10:35 AM",
-    "10:35 AM - 11:20 AM",
-    "11:20 AM - 12:05 PM",
-    "12:05 PM - 12:50 PM",
-    "12:50 PM - 1:35 PM",
-    "1:35 PM - 2:20 PM"
-];
-
-const TIMETABLE_DAYS = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday"
-];
-
-let timetablePeriods = [];
-
-
-function getSelectedTimetableClass() {
-    const select =
-        document.getElementById("timetableClassSelect");
-
-    return select ? select.value : "SS3";
-}
-
-
-function getTimetablePeriods() {
-
-    const saved =
-        localStorage.getItem("schoolTimetablePeriods");
-
-    if (saved) {
-        try {
-            const periods = JSON.parse(saved);
-
-            if (
-                Array.isArray(periods) &&
-                periods.length > 0
-            ) {
-                return periods;
-            }
-
-        } catch (error) {
-            console.error(
-                "TIMETABLE PERIOD ERROR:",
-                error
-            );
-        }
-    }
-
-    return [...DEFAULT_TIMETABLE_PERIODS];
-}
-
-
-function savePeriodsToBrowser() {
-
-    localStorage.setItem(
-        "schoolTimetablePeriods",
-        JSON.stringify(timetablePeriods)
-    );
-}
-
-
-function renderTimetable() {
-
-    timetablePeriods =
-        getTimetablePeriods();
-
-    const header =
-        document.getElementById(
-            "timetableHeader"
-        );
-
-    const body =
-        document.getElementById(
-            "timetableBody"
-        );
-
-    if (!header || !body) return;
-
-
-    header.innerHTML = `
-        <th class="day-column">
-            Day
-        </th>
-    `;
-
-
-    timetablePeriods.forEach(time => {
-
-        const th =
-            document.createElement("th");
-
-        th.textContent = time;
-
-        header.appendChild(th);
-
-    });
-
-
-    body.innerHTML = "";
-
-
-    TIMETABLE_DAYS.forEach(day => {
-
-        const row =
-            document.createElement("tr");
-
-        const dayCell =
-            document.createElement("th");
-
-        dayCell.textContent = day;
-
-        row.appendChild(dayCell);
-
-
-        timetablePeriods.forEach(time => {
-
-            const cell =
-                document.createElement("td");
-
-            cell.dataset.day = day;
-            cell.dataset.time = time;
-
-            cell.innerHTML = `
-                <span class="empty-timetable">
-                    +
-                </span>
-            `;
-
-
-            cell.onclick = () => {
-
-                editTimetableCell(
-                    cell,
-                    day,
-                    time
-                );
-
-            };
-
-
-            row.appendChild(cell);
-
-        });
-
-
-        body.appendChild(row);
-
-    });
-
-
-    loadTimetableGrid();
-}
-
-
-async function loadTimetableGrid() {
-
-    const className =
-        getSelectedTimetableClass();
-
-    try {
-
-        const response =
-            await fetch(
-                `${API_URL}/timetable`
-            );
-
-        if (!response.ok) {
-            throw new Error(
-                "Failed to load timetable"
-            );
-        }
-
-        const data =
-            await response.json();
-
-
-        document
-            .querySelectorAll(
-                "#schoolTimetable td[data-day]"
-            )
-            .forEach(cell => {
-
-                const item =
-                    data.find(entry =>
-                        String(entry.className)
-                            .toLowerCase() ===
-                        String(className)
-                            .toLowerCase()
-                        &&
-                        entry.day ===
-                        cell.dataset.day
-                        &&
-                        entry.time ===
-                        cell.dataset.time
-                    );
-
-
-                if (item) {
-
-                    cell.dataset.id =
-                        item.id;
-
-                    cell.innerHTML = `
-                        <div class="timetable-subject">
-                            ${escapeTimetableText(
-                                item.subject
-                            )}
-                        </div>
-
-                        <div class="timetable-teacher">
-                            (${escapeTimetableText(
-                                item.teacher
-                            )})
-                        </div>
-                    `;
-
-                } else {
-
-                    delete cell.dataset.id;
-
-                    cell.innerHTML = `
-                        <span class="empty-timetable">
-                            +
-                        </span>
-                    `;
-                }
-
-            });
-
-    } catch (error) {
-
-        console.error(
-            "TIMETABLE LOAD ERROR:",
-            error
-        );
-    }
-}
-
-
-function escapeTimetableText(value) {
-
-    const div =
-        document.createElement("div");
-
-    div.textContent =
-        value || "";
-
-    return div.innerHTML;
-}
-
-
-async function editTimetableCell(
-    cell,
-    day,
-    time
-) {
-
-    const className =
-        getSelectedTimetableClass();
-
-
-    const oldSubject =
-        cell.querySelector(
-            ".timetable-subject"
-        )?.textContent || "";
-
-
-    const oldTeacher =
-        cell.querySelector(
-            ".timetable-teacher"
-        )?.textContent
-            .replace(/[()]/g, "")
-            .trim() || "";
-
-
-    const subject =
-        prompt(
-            `${className}\n${day}\n${time}\n\nSubject:`,
-            oldSubject
-        );
-
-
-    if (subject === null) return;
-
-
-    const cleanSubject =
-        subject.trim();
-
-
-    if (!cleanSubject) {
-
-        if (cell.dataset.id) {
-
-            await deleteTimetableEntry(
-                cell.dataset.id
-            );
-
-        }
-
-        await loadTimetableGrid();
-
-        return;
-    }
-
-
-    const teacher =
-        prompt(
-            `Teacher for ${cleanSubject}:`,
-            oldTeacher
-        );
-
-
-    if (teacher === null) return;
-
-
-    const cleanTeacher =
-        teacher.trim();
-
-
-    if (!cleanTeacher) {
-
-        alert(
-            "Please enter the teacher name."
-        );
-
-        return;
-    }
-
-
-    try {
-
-        let response;
-
-
-        if (cell.dataset.id) {
-
-            response =
-                await fetch(
-                    `${API_URL}/timetable/${cell.dataset.id}`,
-                    {
-                        method: "PUT",
-
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
-
-                        body: JSON.stringify({
-                            day,
-                            className,
-                            subject:
-                                cleanSubject,
-                            teacher:
-                                cleanTeacher,
-                            time
-                        })
-                    }
-                );
-
-        } else {
-
-            response =
-                await fetch(
-                    `${API_URL}/timetable`,
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
-
-                        body: JSON.stringify({
-                            day,
-                            className,
-                            subject:
-                                cleanSubject,
-                            teacher:
-                                cleanTeacher,
-                            time
-                        })
-                    }
-                );
-        }
-
-
-        if (!response.ok) {
-
-            const result =
-                await response.json()
-                    .catch(() => ({}));
-
-            throw new Error(
-                result.error ||
-                "Could not save timetable"
-            );
-        }
-
-
-        await loadTimetableGrid();
-
-    } catch (error) {
-
-        console.error(
-            "TIMETABLE SAVE ERROR:",
-            error
-        );
-
-        alert(
-            "Could not save the timetable entry."
-        );
-    }
-}
-
-
-async function deleteTimetableEntry(id) {
-
-    try {
-
-        await fetch(
-            `${API_URL}/timetable/${id}`,
-            {
-                method: "DELETE"
-            }
-        );
-
-    } catch (error) {
-
-        console.error(
-            "TIMETABLE DELETE ERROR:",
-            error
-        );
-    }
-}
-
-
-/* =========================================================
-   EDIT TIMES BUTTON
-========================================================= */
-
-function editTimetableTimes() {
-
-    const editor =
-        document.getElementById(
-            "timetableTimeEditor"
-        );
-
-    const fields =
-        document.getElementById(
-            "timeEditorFields"
-        );
-
-    if (!editor || !fields) return;
-
-
-    fields.innerHTML = "";
-
-
-    timetablePeriods.forEach(
-        (period, index) => {
-
-            const wrapper =
-                document.createElement("div");
-
-            wrapper.className =
-                "time-editor-field";
-
-
-            wrapper.innerHTML = `
-                <label>
-                    Period ${index + 1}
-                </label>
-
-                <input
-                    type="text"
-                    class="timetable-time-input"
-                    value="${escapeTimetableText(period)}"
-                >
-            `;
-
-
-            fields.appendChild(wrapper);
-
-        }
-    );
-
-
-    editor.style.display = "block";
-
-
-    editor.scrollIntoView({
-        behavior: "smooth",
-        block: "center"
-    });
-}
-
-
-function saveTimetableTimes() {
-
-    const inputs =
-        document.querySelectorAll(
-            ".timetable-time-input"
-        );
-
-
-    const newPeriods =
-        Array.from(inputs)
-            .map(input =>
-                input.value.trim()
-            );
-
-
-    if (
-        newPeriods.length === 0 ||
-        newPeriods.some(
-            period => !period
-        )
-    ) {
-
-        alert(
-            "Every timetable period needs a time."
-        );
-
-        return;
-    }
-
-
-    timetablePeriods =
-        newPeriods;
-
-    savePeriodsToBrowser();
-
-    renderTimetable();
-
-    closeTimetableTimeEditor();
-
-
-    alert(
-        "Timetable times updated successfully."
-    );
-}
-
-
-function closeTimetableTimeEditor() {
-
-    const editor =
-        document.getElementById(
-            "timetableTimeEditor"
-        );
-
-    if (editor) {
-        editor.style.display = "none";
-    }
-}
-
-
-/* =========================================================
-   ADD PERIOD
-========================================================= */
-
-function addTimetablePeriod() {
-
-    const newTime =
-        prompt(
-            "Enter the new period time.\n\nExample:\n2:20 PM - 3:05 PM"
-        );
-
-
-    if (!newTime) return;
-
-
-    timetablePeriods.push(
-        newTime.trim()
-    );
-
-
-    savePeriodsToBrowser();
-
-    renderTimetable();
-
-
-    alert(
-        "New period added."
-    );
-}
-
-
-/* =========================================================
-   CLASS SWITCHER
-========================================================= */
-
-function setupTimetableClassSwitcher() {
-
-    const selector =
-        document.getElementById(
-            "timetableClassSelect"
-        );
-
-    if (!selector) return;
-
-
-    selector.addEventListener(
-        "change",
-        () => {
-
-            renderTimetable();
-
-        }
-    );
-}
-
-
-/* =========================================================
-   LOAD TIMETABLE
-========================================================= */
-
-function loadTimetable() {
-
-    timetablePeriods =
-        getTimetablePeriods();
-
-    renderTimetable();
-}
-
-
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
-
-        setupTimetableClassSwitcher();
-
-        if (
-            document.getElementById(
-                "schoolTimetable"
-            )
-        ) {
-            renderTimetable();
-        }
-
-    }
-);
-
-
-/* =========================================================
-   CLASS DASHBOARD
-========================================================= */
-
-let currentClassDashboard = null;
-
-
-/* OPEN CLASS DASHBOARD */
-
-
-
-/* =========================================================
-   REAL CLASS WORKSPACE
-========================================================= */
-
-
-let currentClassDashboardId = null;
-
-
-/* OPEN CLASS WORKSPACE */
-
-
-
-async function openClassDashboard(classId) {
-
-    try {
-
-        console.log("Opening dashboard for class:", classId);
-
-        const response = await fetch(API_URL + "/classes");
-
-        if (!response.ok) {
-            throw new Error(
-                "Could not load classes (" +
-                response.status +
-                ")"
-            );
-        }
-
-        const result = await response.json();
-
-        console.log("Classes API response:", result);
-
-        /*
-         * Your API may return:
-         *   an array
-         *   { classes: [...] }
-         *   { data: [...] }
-         *   { rows: [...] }
-         */
-
-        let classList = [];
-
-        if (Array.isArray(result)) {
-            classList = result;
-        } else if (Array.isArray(result.classes)) {
-            classList = result.classes;
-        } else if (Array.isArray(result.data)) {
-            classList = result.data;
-        } else if (Array.isArray(result.rows)) {
-            classList = result.rows;
-        }
-
-        if (!Array.isArray(classList)) {
-            throw new Error("Invalid classes data");
-        }
-
-        const selectedClass = classList.find(
-            cls => Number(cls.id) === Number(classId)
-        );
-
-        if (!selectedClass) {
-            throw new Error(
-                "Class ID " + classId + " was not found"
-            );
-        }
-
-        currentClassDashboard = selectedClass;
-        currentClassDashboardId = selectedClass.id;
-
-        console.log(
-            "Selected class:",
-            selectedClass
-        );
-
-        if (typeof showSection === "function") {
-            showSection("classDashboard");
-        }
-
-        const title =
-            document.getElementById(
-                "classDashboardTitle"
-            );
-
-        const teacher =
-            document.getElementById(
-                "classDashboardTeacher"
-            );
-
-        const info =
-            document.getElementById(
-                "classDashboardInfo"
-            );
-
-        const studentsBox =
-            document.getElementById(
-                "classDashboardStudents"
-            );
-
-        const className =
-            selectedClass.name ||
-            selectedClass.className ||
-            "Class";
-
-        const teacherName =
-            selectedClass.assignedTeacherName ||
-            selectedClass.assignedTeacher ||
-            selectedClass.teacher ||
-            "Not assigned";
-
-        const students =
-            Array.isArray(selectedClass.students)
-                ? selectedClass.students
-                : [];
-
-        if (title) {
-            title.textContent =
-                className + " Class Dashboard";
-        }
-
-        if (teacher) {
-            teacher.textContent =
-                "Teacher: " + teacherName;
-        }
-
-        if (info) {
-
-            info.innerHTML = `
-                <div class="class-dashboard-info-card">
-                    <strong>Class</strong>
-                    <span>
-                        ${escapeClassDashboardHTML(className)}
-                    </span>
-                </div>
-
-                <div class="class-dashboard-info-card">
-                    <strong>Teacher</strong>
-                    <span>
-                        ${escapeClassDashboardHTML(teacherName)}
-                    </span>
-                </div>
-
-                <div class="class-dashboard-info-card">
-                    <strong>Room</strong>
-                    <span>
-                        ${escapeClassDashboardHTML(
-                            selectedClass.room ||
-                            "Not assigned"
-                        )}
-                    </span>
-                </div>
-
-                <div class="class-dashboard-info-card">
-                    <strong>Students</strong>
-                    <span>
-                        ${students.length}
-                    </span>
-                </div>
-            `;
-        }
-
-        if (typeof renderClassDashboardStudents === "function") {
-            renderClassDashboardStudents(students);
-        }
-
-        if (
-            typeof loadClassDashboardAnnouncements ===
-            "function"
-        ) {
-            await loadClassDashboardAnnouncements(
-                className
-            );
-        }
-
-        if (
-            typeof addClassWorkspaceControls ===
-            "function"
-        ) {
-            addClassWorkspaceControls();
-        }
-
-        
-
-    } catch (error) {
-
-        console.error(
-            "Class dashboard error:",
-            error
-        );
-
-        alert(
-            "Could not open this class. " +
-            error.message
-        );
-    }
-}
-
-
-
-
-/* CLASS STUDENTS */
-
-function renderClassDashboardStudents(students) {
-
-    const container =
-        document.getElementById(
-            "classDashboardStudents"
-        );
-
-    if (!container) return;
-
-
-    if (!students.length) {
-
-        container.innerHTML = `
-
-            <div style="
-                padding:20px;
-                text-align:center;
-                border:1px solid #ddd;
-                border-radius:10px;
-            ">
-
-                <p>No students in this class yet.</p>
-
-                <button
-                    type="button"
-                    class="primary-button"
-                    onclick="addStudentToCurrentClass()"
-                >
-                    ➕ Add Student
-                </button>
-
-            </div>
-
-        `;
-
-        return;
-    }
-
-
-    container.innerHTML = `
-
-        <div style="
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            gap:10px;
-            flex-wrap:wrap;
-            margin-bottom:15px;
-        ">
-
-            <strong>
-                👨‍🎓 Students (${students.length})
-            </strong>
-
-            <button
-                type="button"
-                class="primary-button"
-                onclick="addStudentToCurrentClass()"
-            >
-                ➕ Add Student
-            </button>
-
-        </div>
-
-
-        <div style="overflow-x:auto;">
-
-            <table style="
-                width:100%;
-                border-collapse:collapse;
-            ">
-
-                <thead>
-
-                    <tr>
-
-                        <th style="padding:10px;text-align:left;">
-                            #
-                        </th>
-
-                        <th style="padding:10px;text-align:left;">
-                            Student
-                        </th>
-
-                        <th style="padding:10px;text-align:left;">
-                            Age
-                        </th>
-
-                        <th style="padding:10px;text-align:left;">
-                            Class
-                        </th>
-
-                    </tr>
-
-                </thead>
-
-                <tbody>
-
-                    ${students.map((student,index) => `
-
-                        <tr>
-
-                            <td style="padding:10px;">
-                                ${index + 1}
-                            </td>
-
-                            <td style="padding:10px;">
-                                ${escapeClassDashboardHTML(
-                                    student.name || "Unnamed"
-                                )}
-                            </td>
-
-                            <td style="padding:10px;">
-                                ${escapeClassDashboardHTML(
-                                    student.age ?? "-"
-                                )}
-                            </td>
-
-                            <td style="padding:10px;">
-                                ${escapeClassDashboardHTML(
-                                    student.className || "-"
-                                )}
-                            </td>
-
-                        </tr>
-
-                    `).join("")}
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    `;
-}
-
-
-/* ADD STUDENT TO CURRENT CLASS */
-
-function addStudentToCurrentClass() {
-
-    if (!currentClassDashboard) {
-        alert("No class selected.");
-        return;
-    }
-
-
-    const className =
-        currentClassDashboard.name ||
-        currentClassDashboard.className ||
-        "";
-
-
-    const classInput =
-        document.getElementById(
-            "studentClass"
-        );
-
-    if (classInput) {
-        classInput.value = className;
-    }
-
-
-    if (
-        typeof openModal === "function"
-    ) {
-
-        openModal("studentModal");
-
-    } else {
-
-        alert(
-            "Student form could not be opened."
-        );
-
-    }
-
-}
-
-
-/* LOAD ANNOUNCEMENTS FOR THIS CLASS */
-
-async function loadClassDashboardAnnouncements(className) {
-
-    const container =
-        document.getElementById(
-            "classDashboardAnnouncements"
-        );
-
-    if (!container) return;
-
-
-    container.innerHTML =
-        "<p>Loading announcements...</p>";
-
-
-    try {
-
-        const response = await fetch(
-            `${API_URL}/announcements?className=${encodeURIComponent(className)}`
-        );
-
-        if (!response.ok) {
-            throw new Error(
-                "Could not load announcements."
-            );
-        }
-
-        const announcements =
-            await response.json();
-
-
-        if (
-            !Array.isArray(announcements) ||
-            announcements.length === 0
-        ) {
-
-            container.innerHTML = `
-
-                <p>
-                    No announcements for
-                    ${escapeClassDashboardHTML(className)}.
-                </p>
-
-            `;
-
-            return;
-        }
-
-
-        container.innerHTML =
-            announcements.map(item => `
-
-                <div style="
-                    border:1px solid #ddd;
-                    padding:15px;
-                    margin-bottom:10px;
-                    border-radius:10px;
-                ">
-
-                    <h4>
-                        📢
-                        ${escapeClassDashboardHTML(
-                            item.title || "Announcement"
-                        )}
-                    </h4>
-
-                    <p>
-                        ${escapeClassDashboardHTML(
-                            item.message || ""
-                        )}
-                    </p>
-
-                    <small>
-                        📅
-                        ${escapeClassDashboardHTML(
-                            item.date || ""
-                        )}
-                    </small>
-
-                </div>
-
-            `).join("");
-
-
-    } catch (error) {
-
-        console.error(
-            "Announcement error:",
-            error
-        );
-
-        container.innerHTML =
-            "<p>Could not load announcements.</p>";
-
-    }
-
-}
-
-
-/* ADD WORKSPACE CONTROLS */
-
-function addClassWorkspaceControls() {
-
-    const dashboard =
-        document.getElementById(
-            "classDashboard"
-        );
-
-    if (!dashboard) return;
-
-
-    let controls =
-        document.getElementById(
-            "classWorkspaceControls"
-        );
-
-
-    if (controls) return;
-
-
-    controls =
-        document.createElement("div");
-
-    controls.id =
-        "classWorkspaceControls";
-
-    controls.className =
-        "card";
-
-
-    controls.innerHTML = `
-
-        <h3>
-            👨‍🏫 Teacher Class Workspace
-        </h3>
-
-        <p>
-            Manage everything for this class from here.
-        </p>
-
-        <div style="
-            display:grid;
-            grid-template-columns:
-                repeat(auto-fit,minmax(180px,1fr));
-            gap:12px;
-            margin-top:15px;
-        ">
-
-            <button
-                type="button"
-                class="primary-button"
-                onclick="addStudentToCurrentClass()"
-            >
-                ➕ Add Student
-            </button>
-
-
-            <button
-                type="button"
-                class="primary-button"
-                onclick="openClassRegister()"
-            >
-                📋 Mark Register
-            </button>
-
-
-            <button
-                type="button"
-                class="primary-button"
-                onclick="openClassAttendanceHistory()"
-            >
-                📊 Attendance History
-            </button>
-
-
-            <button
-                type="button"
-                class="primary-button"
-                onclick="openClassTimetable()"
-            >
-                📅 Class Timetable
-            </button>
-
-
-            <button
-                type="button"
-                class="primary-button"
-                onclick="openClassAnnouncements()"
-            >
-                📢 Class Announcements
-            </button>
-
-
-            <button
-                type="button"
-                class="primary-button"
-                onclick="refreshClassDashboard()"
-            >
-                🔄 Refresh Class
-            </button>
-
-        </div>
-
-    `;
-
-
-    const info =
-        document.getElementById(
-            "classDashboardInfo"
-        );
-
-    if (info) {
-        info.parentElement.insertAdjacentElement(
-            "afterend",
-            controls
-        );
-    } else {
-        dashboard.prepend(controls);
-    }
-
-}
-
-
-/* OPEN STUDENTS */
-
-function openClassStudents() {
-
-    const element =
-        document.getElementById(
-            "classDashboardStudents"
-        );
-
-    if (element) {
-
-        element.scrollIntoView({
-            behavior: "smooth"
-        });
-
-    }
-
-}
-
-
-/* OPEN ANNOUNCEMENTS */
-
-function openClassAnnouncements() {
-
-    const element =
-        document.getElementById(
-            "classDashboardAnnouncements"
-        );
-
-    if (element) {
-
-        element.scrollIntoView({
-            behavior: "smooth"
-        });
-
-    }
-
-}
-
-
-/* OPEN TIMETABLE FOR CURRENT CLASS */
-
-function openClassTimetable() {
-
-    if (!currentClassDashboard) {
-        alert("No class selected.");
-        return;
-    }
-
-
-    const className =
-        currentClassDashboard.name ||
-        currentClassDashboard.className ||
-        "";
-
-
-    showSection("timetable");
-
-
-    const selectors =
-        document.querySelectorAll(
-            "select"
-        );
-
-
-    selectors.forEach(select => {
-
-        const options =
-            Array.from(
-                select.options || []
-            );
-
-        const match =
-            options.find(
-                option =>
-                    String(option.textContent)
-                        .trim()
-                        .toLowerCase() ===
-                    String(className)
-                        .trim()
-                        .toLowerCase()
-            );
-
-        if (match) {
-            select.value = match.value;
-        }
-
-    });
-
-
-    if (
-        typeof loadTimetable === "function"
-    ) {
-
-        setTimeout(
-            () => loadTimetable(),
-            100
-        );
-
-    }
-
-}
-
-
-/* OPEN REGISTER */
-
-function openClassRegister() {
-
-    if (!currentClassDashboard) {
-        alert("No class selected.");
-        return;
-    }
-
-    const classId =
-        currentClassDashboard.id;
-
-    const className =
-        currentClassDashboard.name ||
-        currentClassDashboard.className ||
-        "Class";
-
-    currentClassDashboardId = classId;
-
-    if (typeof createAttendanceSection === "function") {
-        createAttendanceSection();
-    }
-
-    const attendanceSection =
-        document.getElementById("attendance");
-
-    if (!attendanceSection) {
-        alert("The attendance section is not available yet.");
-        return;
-    }
-
-    document.querySelectorAll(".section").forEach(section => {
-        section.style.display = "none";
-        section.classList.remove("active");
-    });
-
-    attendanceSection.style.display = "block";
-    attendanceSection.classList.add("active");
-
-    const heading =
-        attendanceSection.querySelector("h2");
-
-    if (heading) {
-        heading.textContent =
-            "📋 " + className + " — Daily Register";
-    }
-
-    if (typeof loadAttendance === "function") {
-
-        try {
-            loadAttendance(classId, className);
-        } catch (error) {
-            console.error("Attendance loading error:", error);
-        }
-
-    }
-
-}
-
-
-/* ATTENDANCE HISTORY */
-
-function openClassAttendanceHistory() {
-
-    if (!currentClassDashboard) {
-        alert("No class selected.");
-        return;
-    }
-
-    const classId =
-        currentClassDashboard.id;
-
-    const className =
-        currentClassDashboard.name ||
-        currentClassDashboard.className ||
-        "Class";
-
-    currentClassDashboardId =
-        classId;
-
-    /* Create the history section */
-
-    if (
-        typeof createMonthlyAttendanceSection ===
-        "function"
-    ) {
-        createMonthlyAttendanceSection();
-    }
-
-    const section =
-        document.getElementById(
-            "monthlyAttendance"
-        );
-
-    if (!section) {
-        alert(
-            "Attendance History could not be opened."
-        );
-        return;
-    }
-
-    /* Hide every other section */
-
-    document
-        .querySelectorAll(".section")
-        .forEach(item => {
-
-            item.style.display =
-                "none";
-
-            item.classList.remove(
-                "active"
-            );
-
-        });
-
-    /* Show Attendance History */
-
-    section.style.display =
-        "block";
-
-    section.classList.add(
-        "active"
-    );
-
-    /* Change heading */
-
-    const heading =
-        section.querySelector("h2");
-
-    if (heading) {
-
-        heading.textContent =
-            "📊 " +
-            className +
-            " — Attendance History";
-
-    }
-
-    /* Add class information */
-
-    let classInfo =
-        document.getElementById(
-            "monthlyAttendanceClassInfo"
-        );
-
-    if (!classInfo) {
-
-        classInfo =
-            document.createElement(
-                "p"
-            );
-
-        classInfo.id =
-            "monthlyAttendanceClassInfo";
-
-        classInfo.style.fontWeight =
-            "600";
-
-        const header =
-            section.querySelector(
-                ".section-header"
-            );
-
-        if (header) {
-            header.appendChild(
-                classInfo
-            );
-        }
-
-    }
-
-    if (classInfo) {
-
-        classInfo.textContent =
-            "Class: " +
-            className;
-
-    }
-
-    /* Load the current month */
-
-    const input =
-        document.getElementById(
-            "monthlyAttendanceDate"
-        );
-
-    if (input && !input.value) {
-
-        input.value =
-            new Date()
-                .toISOString()
-                .slice(0, 7);
-
-    }
-
-    /* Load history */
-
-    if (
-        typeof loadMonthlyAttendance ===
-        "function"
-    ) {
-
-        loadMonthlyAttendance(
-            classId,
-            className
-        );
-
-    }
-
-}
-
-
-/* REFRESH */
-
-
-
-
-
-async function refreshClassDashboard() {
-
-    if (!currentClassDashboardId) {
-        return;
-    }
-
-    await openClassDashboard(
-        currentClassDashboardId
-    );
-
-}
-
-
-/* SAFE HTML */
-
-function escapeClassDashboardHTML(value) {
-
-    return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-
-}
-
 
 

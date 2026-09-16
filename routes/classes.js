@@ -1,74 +1,108 @@
 const express = require("express");
-const db = require("../database/database");
-
 const router = express.Router();
 
-const SCHOOL_ID = 1;
+const db = require("../database/database");
 
-// ======================================================
-// GET ALL CLASSES
-// ======================================================
+
+/* =========================================================
+   GET ALL CLASSES
+========================================================= */
 
 router.get("/", (req, res) => {
+
     try {
+
         const classes = db.prepare(`
-            SELECT *
+            SELECT
+                id,
+                name,
+                teacher,
+                room
             FROM classes
-            WHERE schoolId = ?
-            ORDER BY name COLLATE NOCASE ASC
-        `).all(SCHOOL_ID);
+            ORDER BY id ASC
+        `).all();
 
-        const result = classes.map(classItem => {
-            const students = db.prepare(`
-                SELECT
-                    id,
-                    name,
-                    age,
-                    className,
-                    photo
-                FROM students
-                WHERE schoolId = ?
-                AND className = ?
-                ORDER BY name COLLATE NOCASE ASC
-            `).all(SCHOOL_ID, classItem.name);
-
-            return {
-                ...classItem,
-                students: students,
-                studentCount: students.length
-            };
-        });
-
-        res.json({
-            classes: result
-        });
+        res.json(classes);
 
     } catch (error) {
-        console.error("GET CLASSES ERROR:", error);
+
+        console.error(
+            "GET CLASSES ERROR:",
+            error
+        );
 
         res.status(500).json({
-            message: "Failed to load classes",
-            error: error.message
+            error: "Failed to get classes",
+            details: error.message
         });
     }
 });
 
-// ======================================================
-// GET ONE CLASS
-// ======================================================
+
+/* =========================================================
+   GET ONE CLASS
+========================================================= */
 
 router.get("/:id", (req, res) => {
+
     try {
+
         const classItem = db.prepare(`
-            SELECT *
+            SELECT
+                id,
+                name,
+                teacher,
+                room
             FROM classes
             WHERE id = ?
-            AND schoolId = ?
-        `).get(req.params.id, SCHOOL_ID);
+        `).get(req.params.id);
 
         if (!classItem) {
+
             return res.status(404).json({
-                message: "Class not found"
+                error: "Class not found"
+            });
+        }
+
+        res.json(classItem);
+
+    } catch (error) {
+
+        console.error(
+            "GET CLASS ERROR:",
+            error
+        );
+
+        res.status(500).json({
+            error: "Failed to get class",
+            details: error.message
+        });
+    }
+});
+
+
+/* =========================================================
+   GET STUDENTS IN A CLASS
+========================================================= */
+
+router.get("/:id/students", (req, res) => {
+
+    try {
+
+        const classItem = db.prepare(`
+            SELECT
+                id,
+                name,
+                teacher,
+                room
+            FROM classes
+            WHERE id = ?
+        `).get(req.params.id);
+
+        if (!classItem) {
+
+            return res.status(404).json({
+                error: "Class not found"
             });
         }
 
@@ -80,274 +114,279 @@ router.get("/:id", (req, res) => {
                 className,
                 photo
             FROM students
-            WHERE schoolId = ?
-            AND className = ?
-            ORDER BY name COLLATE NOCASE ASC
-        `).all(SCHOOL_ID, classItem.name);
+            WHERE LOWER(TRIM(className))
+                = LOWER(TRIM(?))
+            ORDER BY name ASC
+        `).all(classItem.name);
 
         res.json({
-            class: {
-                ...classItem,
-                students: students,
-                studentCount: students.length
-            }
+            class: classItem,
+            students: students
         });
 
     } catch (error) {
-        console.error("GET CLASS ERROR:", error);
+
+        console.error(
+            "GET CLASS STUDENTS ERROR:",
+            error
+        );
 
         res.status(500).json({
-            message: "Failed to load class",
-            error: error.message
+            error: "Failed to get class students",
+            details: error.message
         });
     }
 });
 
-// ======================================================
-// ADD CLASS
-// ======================================================
+
+/* =========================================================
+   CREATE CLASS
+========================================================= */
 
 router.post("/", (req, res) => {
+
     try {
-        const name = String(req.body?.name || "").trim();
-        const section = String(req.body?.section || "").trim();
-        const teacher = String(req.body?.teacher || "").trim();
-        const room = String(req.body?.room || "").trim();
+
+        const body = req.body || {};
+
+        const name =
+            String(body.name || "").trim();
+
+        const teacher =
+            String(body.teacher || "").trim();
+
+        const room =
+            String(body.room || "").trim();
+
 
         if (!name) {
+
             return res.status(400).json({
-                message: "Class name is required"
+                error: "Class name is required"
             });
         }
+
 
         const existingClass = db.prepare(`
             SELECT id
             FROM classes
-            WHERE schoolId = ?
-            AND name = ?
-        `).get(SCHOOL_ID, name);
+            WHERE LOWER(TRIM(name))
+                = LOWER(TRIM(?))
+        `).get(name);
+
 
         if (existingClass) {
+
             return res.status(409).json({
-                message: "This class already exists"
+                error:
+                    "This class already exists"
             });
         }
 
+
         const result = db.prepare(`
             INSERT INTO classes
-                (name, section, schoolId, teacher, room)
-            VALUES
-                (?, ?, ?, ?, ?)
+            (
+                name,
+                teacher,
+                room
+            )
+            VALUES (?, ?, ?)
         `).run(
             name,
-            section,
-            SCHOOL_ID,
             teacher,
             room
         );
 
+
         const newClass = db.prepare(`
-            SELECT *
-            FROM classes
-            WHERE id = ?
-        `).get(result.lastInsertRowid);
-
-        res.status(201).json({
-            message: "Class added successfully",
-            class: {
-                ...newClass,
-                students: [],
-                studentCount: 0
-            }
-        });
-
-    } catch (error) {
-        console.error("ADD CLASS ERROR:", error);
-
-        res.status(500).json({
-            message: "Failed to add class",
-            error: error.message
-        });
-    }
-});
-
-// ======================================================
-// UPDATE CLASS
-// ======================================================
-
-router.put("/:id", (req, res) => {
-    try {
-        const name = String(req.body?.name || "").trim();
-        const section = String(req.body?.section || "").trim();
-        const teacher = String(req.body?.teacher || "").trim();
-        const room = String(req.body?.room || "").trim();
-
-        if (!name) {
-            return res.status(400).json({
-                message: "Class name is required"
-            });
-        }
-
-        const oldClass = db.prepare(`
-            SELECT *
-            FROM classes
-            WHERE id = ?
-            AND schoolId = ?
-        `).get(req.params.id, SCHOOL_ID);
-
-        if (!oldClass) {
-            return res.status(404).json({
-                message: "Class not found"
-            });
-        }
-
-        // If the class name changes, update students
-        // that were using the old class name.
-        const updateStudents = db.prepare(`
-            UPDATE students
-            SET className = ?
-            WHERE schoolId = ?
-            AND className = ?
-        `);
-
-        const updateClass = db.prepare(`
-            UPDATE classes
-            SET
-                name = ?,
-                section = ?,
-                teacher = ?,
-                room = ?
-            WHERE id = ?
-            AND schoolId = ?
-        `);
-
-        const updateAll = db.transaction(() => {
-            updateStudents.run(
-                name,
-                SCHOOL_ID,
-                oldClass.name
-            );
-
-            return updateClass.run(
-                name,
-                section,
-                teacher,
-                room,
-                req.params.id,
-                SCHOOL_ID
-            );
-        });
-
-        const result = updateAll();
-
-        if (result.changes === 0) {
-            return res.status(404).json({
-                message: "Class not found"
-            });
-        }
-
-        const updatedClass = db.prepare(`
-            SELECT *
-            FROM classes
-            WHERE id = ?
-            AND schoolId = ?
-        `).get(req.params.id, SCHOOL_ID);
-
-        const students = db.prepare(`
             SELECT
                 id,
                 name,
-                age,
-                className,
-                photo
-            FROM students
-            WHERE schoolId = ?
-            AND className = ?
-            ORDER BY name COLLATE NOCASE ASC
-        `).all(SCHOOL_ID, updatedClass.name);
+                teacher,
+                room
+            FROM classes
+            WHERE id = ?
+        `).get(
+            result.lastInsertRowid
+        );
 
-        res.json({
-            message: "Class updated successfully",
-            class: {
-                ...updatedClass,
-                students: students,
-                studentCount: students.length
-            }
-        });
+
+        res.status(201).json(
+            newClass
+        );
 
     } catch (error) {
-        console.error("UPDATE CLASS ERROR:", error);
+
+        console.error(
+            "CREATE CLASS ERROR:",
+            error
+        );
 
         res.status(500).json({
-            message: "Failed to update class",
-            error: error.message
+            error: "Failed to add class",
+            details: error.message
         });
     }
 });
 
-// ======================================================
-// DELETE CLASS
-// ======================================================
 
-router.delete("/:id", (req, res) => {
+/* =========================================================
+   UPDATE CLASS
+========================================================= */
+
+router.put("/:id", (req, res) => {
+
     try {
-        const classItem = db.prepare(`
-            SELECT *
+
+        const id =
+            Number(req.params.id);
+
+        const body =
+            req.body || {};
+
+        const name =
+            String(body.name || "").trim();
+
+        const teacher =
+            String(body.teacher || "").trim();
+
+        const room =
+            String(body.room || "").trim();
+
+
+        if (!name) {
+
+            return res.status(400).json({
+                error: "Class name is required"
+            });
+        }
+
+
+        const existingClass = db.prepare(`
+            SELECT id
             FROM classes
             WHERE id = ?
-            AND schoolId = ?
-        `).get(req.params.id, SCHOOL_ID);
+        `).get(id);
 
-        if (!classItem) {
+
+        if (!existingClass) {
+
             return res.status(404).json({
-                message: "Class not found"
+                error: "Class not found"
             });
         }
 
-        const students = db.prepare(`
-            SELECT COUNT(*) AS count
-            FROM students
-            WHERE schoolId = ?
-            AND className = ?
+
+        const duplicate = db.prepare(`
+            SELECT id
+            FROM classes
+            WHERE LOWER(TRIM(name))
+                = LOWER(TRIM(?))
+            AND id != ?
         `).get(
-            SCHOOL_ID,
-            classItem.name
+            name,
+            id
         );
 
-        if (Number(students.count) > 0) {
+
+        if (duplicate) {
+
             return res.status(409).json({
-                message:
-                    "This class has students. Move the students to another class before deleting it."
+                error:
+                    "Another class already has this name"
             });
         }
+
+
+        db.prepare(`
+            UPDATE classes
+            SET
+                name = ?,
+                teacher = ?,
+                room = ?
+            WHERE id = ?
+        `).run(
+            name,
+            teacher,
+            room,
+            id
+        );
+
+
+        const updatedClass = db.prepare(`
+            SELECT
+                id,
+                name,
+                teacher,
+                room
+            FROM classes
+            WHERE id = ?
+        `).get(id);
+
+
+        res.json(
+            updatedClass
+        );
+
+    } catch (error) {
+
+        console.error(
+            "UPDATE CLASS ERROR:",
+            error
+        );
+
+        res.status(500).json({
+            error: "Failed to update class",
+            details: error.message
+        });
+    }
+});
+
+
+/* =========================================================
+   DELETE CLASS
+========================================================= */
+
+router.delete("/:id", (req, res) => {
+
+    try {
 
         const result = db.prepare(`
             DELETE FROM classes
             WHERE id = ?
-            AND schoolId = ?
         `).run(
-            req.params.id,
-            SCHOOL_ID
+            req.params.id
         );
 
+
         if (result.changes === 0) {
+
             return res.status(404).json({
-                message: "Class not found"
+                error: "Class not found"
             });
         }
 
+
         res.json({
-            message: "Class deleted successfully"
+            success: true,
+            message:
+                "Class deleted successfully"
         });
 
     } catch (error) {
-        console.error("DELETE CLASS ERROR:", error);
+
+        console.error(
+            "DELETE CLASS ERROR:",
+            error
+        );
 
         res.status(500).json({
-            message: "Failed to delete class",
-            error: error.message
+            error: "Failed to delete class",
+            details: error.message
         });
     }
 });
+
 
 module.exports = router;

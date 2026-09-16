@@ -394,25 +394,42 @@
     <!-- NAVIGATION -->
 
 <nav class="tabs">
-    <button class="tab-button active" onclick="showSection('students')">
+
+    <button
+        class="tab-button active"
+        type="button"
+        onclick="showSection('students')">
         👨‍🎓 Students
     </button>
 
-    <button class="tab-button" onclick="showSection('teachers')">
+    <button
+        class="tab-button"
+        type="button"
+        onclick="showSection('teachers')">
         👨‍🏫 Teachers
     </button>
 
-    <button class="tab-button" onclick="showSection('classes')">
+    <button
+        class="tab-button"
+        type="button"
+        onclick="showSection('classes')">
         🏫 Classes
     </button>
 
-    <button class="tab-button" onclick="showSection('announcements')">
-        📢 Announcements
+    <button
+        class="tab-button"
+        type="button"
+        onclick="showSection('attendance')">
+        📋 Attendance
     </button>
 
-    <button class="tab-button" onclick="showSection('timetable')">
-        📅 Timetable
+    <button
+        class="tab-button"
+        type="button"
+        onclick="showSection('monthlyAttendance')">
+        📊 Monthly Attendance
     </button>
+
 </nav>
 
     <!-- =========================
@@ -624,380 +641,6 @@
         </div>
 
     </section>
-
-
-<!-- =====================================================
-     ANNOUNCEMENTS
-====================================================== -->
-
-<!-- =====================================================
-     ANNOUNCEMENTS
-====================================================== -->
-
-<section
-    id="announcements"
-    class="section"
-    style="display:none;"
->
-
-    <div class="section-header">
-
-        <h2>📢 Announcements</h2>
-
-        <p>
-            Create announcements from the school dashboard
-            and send them to a specific class.
-        </p>
-
-    </div>
-
-
-    <!-- CREATE ANNOUNCEMENT -->
-
-    <div class="card">
-
-        <h3>📢 Create Announcement</h3>
-
-        <label for="announcementClass">
-            <strong>Choose Class</strong>
-        </label>
-
-        <select id="announcementClass">
-
-            <option value="JSS1">JSS1</option>
-
-            <option value="JSS2">JSS2</option>
-
-            <option value="JSS3">JSS3</option>
-
-            <option value="SS1">SS1</option>
-
-            <option value="SS2">SS2</option>
-
-            <option value="SS3">SS3</option>
-
-        </select>
-
-
-        <input
-            id="announcementTitle"
-            type="text"
-            placeholder="Announcement title"
-        >
-
-
-        <textarea
-            id="announcementMessage"
-            rows="5"
-            placeholder="Write your announcement..."
-        ></textarea>
-
-
-        <input
-            id="announcementDate"
-            type="date"
-        >
-
-
-        <button
-            class="primary-button"
-            onclick="saveAnnouncement()"
-        >
-            💾 Save Announcement
-        </button>
-
-    </div>
-
-
-    <!-- VIEW CLASS ANNOUNCEMENTS -->
-
-    <div class="card">
-
-        <h3>📢 Class Announcements</h3>
-
-        <label for="announcementViewClass">
-            <strong>View Class</strong>
-        </label>
-
-        <select
-            id="announcementViewClass"
-            onchange="loadAnnouncements()"
-        >
-
-            <option value="JSS1">JSS1</option>
-
-            <option value="JSS2">JSS2</option>
-
-            <option value="JSS3">JSS3</option>
-
-            <option value="SS1">SS1</option>
-
-            <option value="SS2">SS2</option>
-
-            <option value="SS3">SS3</option>
-
-        </select>
-
-
-        <div id="announcementsList">
-
-            <p>
-                No announcements yet.
-            </p>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- =====================================================
-     TIMETABLE
-====================================================== -->
-
-<section id="timetable" class="section" style="display:none;">
-
-    <div class="section-header">
-        <h2>📅 Timetable</h2>
-        <p>View and manage each class timetable.</p>
-    </div>
-
-    <div class="card timetable-toolbar">
-
-        <div class="timetable-class-box">
-
-            <label for="timetableClassSelect">
-                <strong>Class</strong>
-            </label>
-
-            <select id="timetableClassSelect">
-                <option value="JSS1">JSS1</option>
-                <option value="JSS2">JSS2</option>
-                <option value="JSS3">JSS3</option>
-                <option value="SS1">SS1</option>
-                <option value="SS2">SS2</option>
-                <option value="SS3" selected>SS3</option>
-            </select>
-
-        </div>
-
-        <div class="timetable-actions">
-
-            <button
-                class="primary-button"
-                onclick="editTimetableTimes()">
-                ✏️ Edit Times
-            </button>
-
-            <button
-                class="primary-button"
-                onclick="addTimetablePeriod()">
-                ➕ Add Period
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- TIME EDITOR -->
-
-    <div
-        id="timetableTimeEditor"
-        class="card"
-        style="display:none;">
-
-        <h3>✏️ Edit Timetable Times</h3>
-
-        <p>
-            Change the time shown at the top of each column.
-        </p>
-
-        <div id="timeEditorFields"></div>
-
-        <button
-            class="primary-button"
-            onclick="saveTimetableTimes()">
-            💾 Save Times
-        </button>
-
-        <button
-            class="secondary-button"
-            onclick="closeTimetableTimeEditor()">
-            Cancel
-        </button>
-
-    </div>
-
-
-    <!-- MAIN TIMETABLE -->
-
-    <div class="card timetable-card">
-
-        <div class="timetable-wrapper">
-
-            <table id="schoolTimetable">
-
-                <thead>
-                    <tr id="timetableHeader">
-                        <th class="day-column">
-                            Day
-                        </th>
-                    </tr>
-                </thead>
-
-                <tbody id="timetableBody">
-                </tbody>
-
-            </table>
-
-        </div>
-
-        <p class="timetable-help">
-            💡 Click any empty timetable cell to add a subject.
-            Click an existing subject to edit it.
-        </p>
-
-    </div>
-
-</section>
-
-
-<!-- =====================================================
-     CLASS DASHBOARD
-====================================================== -->
-
-<section
-    id="classDashboard"
-    class="section"
-    style="display:none;"
->
-
-    <div class="section-header">
-
-        <button
-            type="button"
-            class="secondary-button"
-            onclick="showSection('classes')"
-        >
-            ← Back to Classes
-        </button>
-
-        <h2 id="classDashboardTitle">
-            🏫 Class Dashboard
-        </h2>
-
-        <p id="classDashboardTeacher">
-            👨‍🏫 Teacher: No teacher assigned
-        </p>
-
-    </div>
-
-
-    <!-- CLASS INFORMATION -->
-
-    <div class="card">
-
-        <h3>🏫 Class Information</h3>
-
-        <div id="classDashboardInfo">
-
-            <p>
-                Loading class information...
-            </p>
-
-        </div>
-
-    </div>
-
-
-    <!-- STUDENTS -->
-
-    <div class="card">
-
-        <h3>👨‍🎓 Students</h3>
-
-        <div id="classDashboardStudents">
-
-            <p>
-                Loading students...
-            </p>
-
-        </div>
-
-    </div>
-
-
-    <!-- CLASS FEATURES -->
-
-    <div class="card">
-
-        <h3>📚 Class Management</h3>
-
-        <div
-            style="
-                display:grid;
-                grid-template-columns:
-                    repeat(auto-fit,minmax(180px,1fr));
-                gap:15px;
-            "
-        >
-
-            
-
-
-            <button
-                type="button"
-                class="primary-button"
-                onclick="openClassTimetable()"
-            >
-                📅 Timetable
-            </button>
-
-
-            <button
-                type="button"
-                class="primary-button"
-                onclick="openClassAnnouncements()"
-            >
-                📢 Announcements
-            </button>
-
-
-            <button
-                type="button"
-                class="primary-button"
-                onclick="openClassStudents()"
-            >
-                👨‍🎓 Students
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- ANNOUNCEMENTS -->
-
-    <div class="card">
-
-        <h3>
-            📢 Announcements
-        </h3>
-
-        <div id="classDashboardAnnouncements">
-
-            <p>
-                No announcements yet.
-            </p>
-
-        </div>
-
-    </div>
-
-
-</section>
 
 </main>
 

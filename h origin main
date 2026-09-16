@@ -1,0 +1,76 @@
+[1mdiff --git a/backend/server.js b/backend/server.js[m
+[1mindex dd2afb4..0f01a04 100644[m
+[1m--- a/backend/server.js[m
+[1m+++ b/backend/server.js[m
+[36m@@ -2,26 +2,62 @@[m [mconst express = require("express");[m
+ const cors = require("cors");[m
+ const path = require("path");[m
+ [m
+[31m-const app = express();[m
+[31m-const PORT = process.env.PORT || 3000;[m
+[31m-[m
+ const studentsRouter = require("./routes/students");[m
+ const teachersRouter = require("./routes/teachers");[m
+ const classesRouter = require("./routes/classes");[m
+[32m+[m[32mconst schoolsRouter = require("./routes/schools");[m
+[32m+[m[32mconst attendanceRouter = require("./routes/attendance");[m
+[32m+[m
+[32m+[m[32mconst app = express();[m
+[32m+[m[32mconst PORT = process.env.PORT || 3000;[m
+ [m
+ app.use(cors());[m
+[31m-app.use(express.json());[m
+[32m+[m[32mapp.use(express.json({ limit: "4mb" }));[m
+[32m+[m
+[32m+[m[32m// ======================================================[m
+[32m+[m[32m// SCHOOL ACCOUNT ROUTES[m
+[32m+[m[32m// ======================================================[m
+[32m+[m
+[32m+[m[32mapp.use("/api/schools", schoolsRouter);[m
+[32m+[m
+[32m+[m[32m// ======================================================[m
+[32m+[m[32m// SCHOOL DATA ROUTES[m
+[32m+[m[32m// ======================================================[m
+ [m
+ app.use("/api/students", studentsRouter);[m
+[32m+[m
+ app.use("/api/teachers", teachersRouter);[m
+[32m+[m
+ app.use("/api/classes", classesRouter);[m
+ [m
+[31m-app.use(express.static(path.join(__dirname, "../frontend")));[m
+[32m+[m[32mapp.use("/api/attendance", attendanceRouter);[m
+[32m+[m
+[32m+[m[32m// ======================================================[m
+[32m+[m[32m// FRONTEND[m
+[32m+[m[32m// ======================================================[m
+[32m+[m
+[32m+[m[32mapp.use([m
+[32m+[m[32m    express.static([m
+[32m+[m[32m        path.join(__dirname, "frontend")[m
+[32m+[m[32m    )[m
+[32m+[m[32m);[m
+ [m
+ app.get("/", (req, res) => {[m
+[31m-    res.sendFile(path.join(__dirname, "../frontend/index.html"));[m
+[32m+[m[32m    res.sendFile([m
+[32m+[m[32m        path.join([m
+[32m+[m[32m            __dirname,[m
+[32m+[m[32m            "frontend",[m
+[32m+[m[32m            "index.html"[m
+[32m+[m[32m        )[m
+[32m+[m[32m    );[m
+ });[m
+ [m
+[32m+[m[32m// ======================================================[m
+[32m+[m[32m// START SERVER[m
+[32m+[m[32m// ======================================================[m
+[32m+[m
+ app.listen(PORT, () => {[m
+[31m-    console.log(`Server running on port ${PORT}`);[m
+[31m-});[m
+[32m+[m[32m    console.log([m
+[32m+[m[32m        `SchoolConnect server running on port ${PORT}`[m
+[32m+[m[32m    );[m
+[32m+[m[32m});[m
+\ No newline at end of file[m
