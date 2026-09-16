@@ -55,6 +55,7 @@ db.prepare(`
 
 addColumn("teachers", "schoolId", "INTEGER NOT NULL DEFAULT 1");
 addColumn("teachers", "photo", "TEXT");
+addColumn("teachers", "password", "TEXT");
 
 /*
     NEW:
