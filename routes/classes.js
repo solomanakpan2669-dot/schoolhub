@@ -184,18 +184,23 @@ router.post("/", (req, res) => {
         }
 
 
+        const section =
+            String(req.body?.section || name || "General").trim();
+
         const result = db.prepare(`
             INSERT INTO classes
             (
                 name,
                 teacher,
-                room
+                room,
+                section
             )
-            VALUES (?, ?, ?)
+            VALUES (?, ?, ?, ?)
         `).run(
             name,
             teacher,
-            room
+            room,
+            section
         );
 
 
