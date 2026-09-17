@@ -3,6 +3,48 @@ const router = express.Router();
 
 const db = require("../database/database");
 
+const defaultClasses = [
+    ["jss1", "Mr mavel", "Room 2"],
+    ["jss2", "Not assigned", "Room 3"],
+    ["jss3", "mrs Okediji", "Room 4"],
+    ["ss1", "Mr yuti", "Room 5"],
+    ["ss2", "mrs adeyomo", "Room 7"],
+    ["ss3", "Not assigned", "Room 8"]
+];
+
+try {
+    const insertDefaultClass = db.prepare(`
+        INSERT INTO classes
+        (name, teacher, room, section)
+        VALUES (?, ?, ?, ?)
+    `);
+
+    const addDefaultClasses = db.transaction(() => {
+        for (const [name, teacher, room] of defaultClasses) {
+            const exists = db.prepare(`
+                SELECT id FROM classes
+                WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))
+            `).get(name);
+
+            if (!exists) {
+                insertDefaultClass.run(
+                    name,
+                    teacher,
+                    room,
+                    name
+                );
+            }
+        }
+    });
+
+    addDefaultClasses();
+
+    console.log("Default school classes checked.");
+} catch (error) {
+    console.error("DEFAULT CLASSES ERROR:", error.message);
+}
+
+
 
 /* =========================================================
    GET ALL CLASSES
