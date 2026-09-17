@@ -5232,22 +5232,10 @@ function addClassWorkspaceControls() {
             </button>
 
 
-            <button
-                type="button"
-                class="primary-button"
-                onclick="openClassRegister()"
-            >
-                📋 Mark Register
-            </button>
 
 
-            <button
-                type="button"
-                class="primary-button"
-                onclick="openClassAttendanceHistory()"
-            >
-                📊 Attendance History
-            </button>
+
+
 
 
             <button
