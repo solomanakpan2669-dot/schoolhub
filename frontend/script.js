@@ -1,4 +1,114 @@
 
+/* =========================================================
+   PROFESSIONAL UI SOUNDS
+========================================================= */
+
+function playUISound(type = "success") {
+
+    try {
+
+        const AudioContext =
+            window.AudioContext ||
+            window.webkitAudioContext;
+
+        if (!AudioContext) return;
+
+        const audio =
+            new AudioContext();
+
+        const oscillator =
+            audio.createOscillator();
+
+        const gain =
+            audio.createGain();
+
+        oscillator.connect(gain);
+        gain.connect(audio.destination);
+
+        const sounds = {
+
+            success: {
+                frequency: 660,
+                duration: 0.12,
+                volume: 0.055
+            },
+
+            notification: {
+                frequency: 520,
+                duration: 0.16,
+                volume: 0.045
+            },
+
+            click: {
+                frequency: 420,
+                duration: 0.055,
+                volume: 0.025
+            },
+
+            error: {
+                frequency: 220,
+                duration: 0.18,
+                volume: 0.05
+            }
+
+        };
+
+        const sound =
+            sounds[type] || sounds.success;
+
+        oscillator.type = "sine";
+
+        oscillator.frequency.setValueAtTime(
+            sound.frequency,
+            audio.currentTime
+        );
+
+        gain.gain.setValueAtTime(
+            0.0001,
+            audio.currentTime
+        );
+
+        gain.gain.exponentialRampToValueAtTime(
+            sound.volume,
+            audio.currentTime + 0.01
+        );
+
+        gain.gain.exponentialRampToValueAtTime(
+            0.0001,
+            audio.currentTime + sound.duration
+        );
+
+        oscillator.start();
+
+        oscillator.stop(
+            audio.currentTime +
+            sound.duration +
+            0.02
+        );
+
+        setTimeout(() => {
+
+            if (
+                audio.state !== "closed"
+            ) {
+                audio.close();
+            }
+
+        }, 500);
+
+    } catch (error) {
+
+        console.warn(
+            "UI sound unavailable:",
+            error
+        );
+
+    }
+
+}
+
+
+
 // =========================================================
 // SHOW / HIDE PASSWORD
 // =========================================================
