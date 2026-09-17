@@ -777,7 +777,25 @@ async function addStudent(event) {
 
         closeModal("studentModal");
 
+        /* Refresh the main students list */
         await loadStudents();
+
+        /* Refresh the currently open class dashboard */
+        if (
+            currentClassDashboard &&
+            currentClassDashboard.id
+        ) {
+            try {
+                await openClassDashboard(
+                    currentClassDashboard.id
+                );
+            } catch (dashboardError) {
+                console.error(
+                    "CLASS DASHBOARD REFRESH ERROR:",
+                    dashboardError
+                );
+            }
+        }
 
     } catch (error) {
 
