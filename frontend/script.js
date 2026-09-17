@@ -5190,156 +5190,289 @@ function addClassWorkspaceControls() {
         controls.remove();
     }
 
-    controls = document.createElement("div");
+    const className =
+        currentClassDashboard?.name ||
+        currentClassDashboard?.className ||
+        "Class";
 
-    controls.id = "classWorkspaceControls";
+    const teacherName =
+        currentClassDashboard?.teacher ||
+        currentClassDashboard?.assignedTeacherName ||
+        "Teacher";
+
+    controls =
+        document.createElement("div");
+
+    controls.id =
+        "classWorkspaceControls";
 
     controls.innerHTML = `
 
-        <div class="teacher-workspace">
+        <div class="professional-teacher-dashboard">
 
-            <div class="teacher-workspace-header">
+            <!-- HEADER -->
 
-                <div class="teacher-workspace-icon">
-                    👨‍🏫
+            <div class="teacher-portal-header">
+
+                <div class="teacher-portal-brand">
+
+                    <div class="teacher-portal-logo">
+                        🏫
+                    </div>
+
+                    <div>
+
+                        <div class="teacher-portal-small">
+                            TEACHER PORTAL
+                        </div>
+
+                        <h2>
+                            ${escapeClassDashboardHTML(className)}
+                        </h2>
+
+                        <p>
+                            Welcome back, ${escapeClassDashboardHTML(teacherName)}
+                        </p>
+
+                    </div>
+
                 </div>
 
-                <div class="teacher-workspace-heading">
+                <div class="teacher-status">
+                    <span class="status-dot"></span>
+                    Class Active
+                </div>
 
-                    <span class="teacher-workspace-label">
-                        TEACHER WORKSPACE
-                    </span>
+            </div>
 
-                    <h3>
-                        Manage Your Class
-                    </h3>
 
-                    <p>
-                        Everything you need to manage your assigned
-                        class is available here.
-                    </p>
+            <!-- QUICK STATS -->
+
+            <div class="teacher-quick-stats">
+
+                <div class="teacher-stat-card">
+
+                    <div class="teacher-stat-icon students">
+                        👨‍🎓
+                    </div>
+
+                    <div>
+                        <span>
+                            STUDENTS
+                        </span>
+
+                        <strong id="teacherStudentCount">
+                            0
+                        </strong>
+                    </div>
+
+                </div>
+
+
+                <div class="teacher-stat-card">
+
+                    <div class="teacher-stat-icon timetable">
+                        📅
+                    </div>
+
+                    <div>
+                        <span>
+                            TIMETABLE
+                        </span>
+
+                        <strong>
+                            View
+                        </strong>
+                    </div>
+
+                </div>
+
+
+                <div class="teacher-stat-card">
+
+                    <div class="teacher-stat-icon announcements">
+                        📢
+                    </div>
+
+                    <div>
+                        <span>
+                            ANNOUNCEMENTS
+                        </span>
+
+                        <strong>
+                            View
+                        </strong>
+                    </div>
+
+                </div>
+
+
+                <div class="teacher-stat-card">
+
+                    <div class="teacher-stat-icon classroom">
+                        🏫
+                    </div>
+
+                    <div>
+                        <span>
+                            CLASSROOM
+                        </span>
+
+                        <strong>
+                            ${escapeClassDashboardHTML(
+                                currentClassDashboard?.room ||
+                                "Not assigned"
+                            )}
+                        </strong>
+                    </div>
 
                 </div>
 
             </div>
 
 
-            <div class="teacher-workspace-actions">
+            <!-- MANAGEMENT -->
 
-                <button
-                    type="button"
-                    class="teacher-action-card"
-                    onclick="addStudentToCurrentClass()"
-                >
+            <div class="teacher-management">
 
-                    <span class="teacher-action-icon">
-                        ➕
-                    </span>
+                <div class="teacher-management-title">
 
-                    <span class="teacher-action-content">
+                    <div>
 
-                        <strong>
-                            Add Student
-                        </strong>
+                        <span>
+                            CLASS MANAGEMENT
+                        </span>
 
-                        <small>
-                            Register a new student in this class
-                        </small>
+                        <h3>
+                            Manage your classroom
+                        </h3>
 
-                    </span>
+                    </div>
 
-                    <span class="teacher-action-arrow">
-                        →
-                    </span>
+                    <button
+                        type="button"
+                        class="teacher-refresh-button"
+                        onclick="refreshClassDashboard()"
+                    >
+                        🔄 Refresh
+                    </button>
 
-                </button>
+                </div>
 
 
-                <button
-                    type="button"
-                    class="teacher-action-card"
-                    onclick="openClassTimetable()"
-                >
+                <div class="teacher-management-grid">
 
-                    <span class="teacher-action-icon">
-                        📅
-                    </span>
+                    <button
+                        type="button"
+                        class="teacher-management-card add"
+                        onclick="addStudentToCurrentClass()"
+                    >
 
-                    <span class="teacher-action-content">
+                        <div class="management-icon">
+                            ➕
+                        </div>
 
-                        <strong>
-                            Class Timetable
-                        </strong>
+                        <div class="management-text">
 
-                        <small>
-                            View your class schedule and lessons
-                        </small>
+                            <strong>
+                                Add Student
+                            </strong>
 
-                    </span>
+                            <span>
+                                Register a new student
+                                in this class
+                            </span>
 
-                    <span class="teacher-action-arrow">
-                        →
-                    </span>
+                        </div>
 
-                </button>
+                        <b>→</b>
 
-
-                <button
-                    type="button"
-                    class="teacher-action-card"
-                    onclick="openClassAnnouncements()"
-                >
-
-                    <span class="teacher-action-icon">
-                        📢
-                    </span>
-
-                    <span class="teacher-action-content">
-
-                        <strong>
-                            Class Announcements
-                        </strong>
-
-                        <small>
-                            View important class notices
-                        </small>
-
-                    </span>
-
-                    <span class="teacher-action-arrow">
-                        →
-                    </span>
-
-                </button>
+                    </button>
 
 
-                <button
-                    type="button"
-                    class="teacher-action-card"
-                    onclick="refreshClassDashboard()"
-                >
+                    <button
+                        type="button"
+                        class="teacher-management-card schedule"
+                        onclick="openClassTimetable()"
+                    >
 
-                    <span class="teacher-action-icon">
-                        🔄
-                    </span>
+                        <div class="management-icon">
+                            📅
+                        </div>
 
-                    <span class="teacher-action-content">
+                        <div class="management-text">
 
-                        <strong>
-                            Refresh Dashboard
-                        </strong>
+                            <strong>
+                                Class Timetable
+                            </strong>
 
-                        <small>
-                            Reload the latest class information
-                        </small>
+                            <span>
+                                View lessons and
+                                class schedule
+                            </span>
 
-                    </span>
+                        </div>
 
-                    <span class="teacher-action-arrow">
-                        →
-                    </span>
+                        <b>→</b>
 
-                </button>
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="teacher-management-card notice"
+                        onclick="openClassAnnouncements()"
+                    >
+
+                        <div class="management-icon">
+                            📢
+                        </div>
+
+                        <div class="management-text">
+
+                            <strong>
+                                Announcements
+                            </strong>
+
+                            <span>
+                                View important class
+                                announcements
+                            </span>
+
+                        </div>
+
+                        <b>→</b>
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="teacher-management-card students"
+                        onclick="openClassStudents()"
+                    >
+
+                        <div class="management-icon">
+                            👨‍🎓
+                        </div>
+
+                        <div class="management-text">
+
+                            <strong>
+                                Student Directory
+                            </strong>
+
+                            <span>
+                                View students in this class
+                            </span>
+
+                        </div>
+
+                        <b>→</b>
+
+                    </button>
+
+                </div>
 
             </div>
 
@@ -5349,7 +5482,7 @@ function addClassWorkspaceControls() {
 
 
     const styleId =
-        "teacherWorkspaceProfessionalStyles";
+        "professionalTeacherDashboardStyles";
 
     if (!document.getElementById(styleId)) {
 
@@ -5361,162 +5494,351 @@ function addClassWorkspaceControls() {
         style.textContent = `
 
             #classWorkspaceControls {
-                margin-top: 24px;
-                border: none;
-                background: transparent;
+                margin-top: 26px;
                 padding: 0;
+                border: 0;
+                background: transparent;
             }
 
-            .teacher-workspace {
-                background: #ffffff;
-                border: 1px solid #e5e7eb;
-                border-radius: 18px;
+            .professional-teacher-dashboard {
                 overflow: hidden;
+                border-radius: 22px;
+                background: #f1f5f9;
                 box-shadow:
-                    0 8px 30px rgba(15, 23, 42, 0.08);
+                    0 15px 45px rgba(15,23,42,.12);
+                border: 1px solid #dbe3ee;
             }
 
-            .teacher-workspace-header {
+            .teacher-portal-header {
+                min-height: 170px;
+                padding: 30px;
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 20px;
+
+                background:
+                    radial-gradient(
+                        circle at 85% 20%,
+                        rgba(59,130,246,.35),
+                        transparent 28%
+                    ),
+                    radial-gradient(
+                        circle at 10% 100%,
+                        rgba(14,165,233,.25),
+                        transparent 30%
+                    ),
+                    linear-gradient(
+                        135deg,
+                        #0f172a,
+                        #172554 55%,
+                        #1e3a8a
+                    );
+            }
+
+            .teacher-portal-brand {
                 display: flex;
                 align-items: center;
                 gap: 18px;
-                padding: 24px;
-                background: linear-gradient(
-                    135deg,
-                    #f8fafc,
-                    #eef2ff
-                );
-                border-bottom: 1px solid #e5e7eb;
             }
 
-            .teacher-workspace-icon {
-                width: 58px;
-                height: 58px;
-                min-width: 58px;
-                border-radius: 16px;
+            .teacher-portal-logo {
+                width: 64px;
+                height: 64px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 28px;
-                background: #ffffff;
-                border: 1px solid #e2e8f0;
+                border-radius: 18px;
+                font-size: 30px;
+                background: rgba(255,255,255,.12);
+                border: 1px solid rgba(255,255,255,.2);
                 box-shadow:
-                    0 4px 12px rgba(15, 23, 42, 0.08);
+                    0 10px 25px rgba(0,0,0,.2);
             }
 
-            .teacher-workspace-label {
-                display: block;
+            .teacher-portal-small {
                 font-size: 11px;
                 font-weight: 800;
-                letter-spacing: 1.4px;
-                color: #64748b;
-                margin-bottom: 4px;
+                letter-spacing: 2px;
+                color: #93c5fd;
+                margin-bottom: 5px;
             }
 
-            .teacher-workspace-heading h3 {
+            .teacher-portal-header h2 {
                 margin: 0;
-                font-size: 22px;
-                color: #0f172a;
+                font-size: 30px;
+                font-weight: 800;
             }
 
-            .teacher-workspace-heading p {
+            .teacher-portal-header p {
                 margin: 6px 0 0;
-                color: #64748b;
+                color: #cbd5e1;
                 font-size: 14px;
             }
 
-            .teacher-workspace-actions {
-                display: grid;
-                grid-template-columns:
-                    repeat(2, minmax(0, 1fr));
-                gap: 14px;
-                padding: 20px;
-            }
-
-            .teacher-action-card {
-                width: 100%;
-                min-height: 96px;
-                border: 1px solid #e5e7eb;
-                border-radius: 14px;
-                background: #ffffff;
+            .teacher-status {
                 display: flex;
                 align-items: center;
-                gap: 14px;
-                padding: 16px;
-                text-align: left;
-                cursor: pointer;
-                transition:
-                    transform 0.18s ease,
-                    box-shadow 0.18s ease,
-                    border-color 0.18s ease;
+                gap: 8px;
+                padding: 9px 14px;
+                border-radius: 999px;
+                background: rgba(255,255,255,.1);
+                border: 1px solid rgba(255,255,255,.15);
+                font-size: 12px;
+                font-weight: 700;
+                white-space: nowrap;
             }
 
-            .teacher-action-card:hover {
-                transform: translateY(-2px);
-                border-color: #cbd5e1;
+            .status-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: #22c55e;
                 box-shadow:
-                    0 8px 22px rgba(15, 23, 42, 0.09);
+                    0 0 0 4px rgba(34,197,94,.15);
             }
 
-            .teacher-action-icon {
+            .teacher-quick-stats {
+                display: grid;
+                grid-template-columns:
+                    repeat(4, minmax(0,1fr));
+                gap: 14px;
+                padding: 18px;
+                background: #e8eef7;
+            }
+
+            .teacher-stat-card {
+                display: flex;
+                align-items: center;
+                gap: 13px;
+                padding: 17px;
+                background: white;
+                border-radius: 16px;
+                border: 1px solid #dce4ef;
+                box-shadow:
+                    0 5px 15px rgba(15,23,42,.05);
+            }
+
+            .teacher-stat-icon {
                 width: 46px;
                 height: 46px;
                 min-width: 46px;
-                border-radius: 12px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 22px;
-                background: #f1f5f9;
+                border-radius: 13px;
+                font-size: 21px;
             }
 
-            .teacher-action-content {
+            .teacher-stat-icon.students {
+                background: #dbeafe;
+            }
+
+            .teacher-stat-icon.timetable {
+                background: #ede9fe;
+            }
+
+            .teacher-stat-icon.announcements {
+                background: #fef3c7;
+            }
+
+            .teacher-stat-icon.classroom {
+                background: #dcfce7;
+            }
+
+            .teacher-stat-card span {
+                display: block;
+                color: #64748b;
+                font-size: 10px;
+                font-weight: 800;
+                letter-spacing: .8px;
+            }
+
+            .teacher-stat-card strong {
+                display: block;
+                margin-top: 4px;
+                color: #0f172a;
+                font-size: 16px;
+            }
+
+            .teacher-management {
+                padding: 25px;
+                background: #f8fafc;
+            }
+
+            .teacher-management-title {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 15px;
+                margin-bottom: 18px;
+            }
+
+            .teacher-management-title span {
+                color: #64748b;
+                font-size: 10px;
+                font-weight: 800;
+                letter-spacing: 1.5px;
+            }
+
+            .teacher-management-title h3 {
+                margin: 4px 0 0;
+                color: #0f172a;
+                font-size: 20px;
+            }
+
+            .teacher-refresh-button {
+                border: 0;
+                padding: 10px 15px;
+                border-radius: 10px;
+                background: #0f172a;
+                color: white;
+                font-weight: 700;
+                cursor: pointer;
+                transition: .2s;
+            }
+
+            .teacher-refresh-button:hover {
+                background: #1e3a8a;
+                transform: translateY(-1px);
+            }
+
+            .teacher-management-grid {
+                display: grid;
+                grid-template-columns:
+                    repeat(2, minmax(0,1fr));
+                gap: 15px;
+            }
+
+            .teacher-management-card {
+                min-height: 110px;
+                border: 1px solid #dce4ef;
+                border-radius: 16px;
+                padding: 17px;
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                text-align: left;
+                cursor: pointer;
+                background: white;
+                transition:
+                    transform .18s ease,
+                    box-shadow .18s ease,
+                    border-color .18s ease;
+            }
+
+            .teacher-management-card:hover {
+                transform: translateY(-3px);
+                box-shadow:
+                    0 12px 25px rgba(15,23,42,.09);
+            }
+
+            .teacher-management-card.add:hover {
+                border-color: #60a5fa;
+            }
+
+            .teacher-management-card.schedule:hover {
+                border-color: #a78bfa;
+            }
+
+            .teacher-management-card.notice:hover {
+                border-color: #fbbf24;
+            }
+
+            .teacher-management-card.students:hover {
+                border-color: #34d399;
+            }
+
+            .management-icon {
+                width: 50px;
+                height: 50px;
+                min-width: 50px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 14px;
+                font-size: 23px;
+            }
+
+            .add .management-icon {
+                background: #dbeafe;
+            }
+
+            .schedule .management-icon {
+                background: #ede9fe;
+            }
+
+            .notice .management-icon {
+                background: #fef3c7;
+            }
+
+            .students .management-icon {
+                background: #dcfce7;
+            }
+
+            .management-text {
+                flex: 1;
                 display: flex;
                 flex-direction: column;
                 gap: 5px;
-                flex: 1;
             }
 
-            .teacher-action-content strong {
+            .management-text strong {
                 color: #0f172a;
                 font-size: 15px;
             }
 
-            .teacher-action-content small {
+            .management-text span {
                 color: #64748b;
                 font-size: 12px;
                 line-height: 1.4;
             }
 
-            .teacher-action-arrow {
-                font-size: 20px;
+            .teacher-management-card b {
                 color: #94a3b8;
-                transition: transform 0.18s ease;
+                font-size: 21px;
+                transition: transform .18s ease;
             }
 
-            .teacher-action-card:hover
-            .teacher-action-arrow {
-                transform: translateX(3px);
-                color: #475569;
+            .teacher-management-card:hover b {
+                transform: translateX(4px);
+                color: #334155;
             }
 
-            @media (max-width: 700px) {
+            @media (max-width: 850px) {
 
-                .teacher-workspace-header {
-                    padding: 20px;
+                .teacher-quick-stats {
+                    grid-template-columns:
+                        repeat(2, minmax(0,1fr));
                 }
 
-                .teacher-workspace-actions {
+            }
+
+            @media (max-width: 600px) {
+
+                .teacher-portal-header {
+                    padding: 22px;
+                    align-items: flex-start;
+                    flex-direction: column;
+                }
+
+                .teacher-portal-header h2 {
+                    font-size: 24px;
+                }
+
+                .teacher-quick-stats,
+                .teacher-management-grid {
                     grid-template-columns: 1fr;
-                    padding: 14px;
                 }
 
-                .teacher-workspace-heading h3 {
-                    font-size: 19px;
+                .teacher-management {
+                    padding: 18px;
                 }
 
-                .teacher-workspace-heading p {
-                    font-size: 13px;
+                .teacher-management-title {
+                    align-items: flex-start;
+                    flex-direction: column;
                 }
 
             }
@@ -5541,6 +5863,21 @@ function addClassWorkspaceControls() {
 
         dashboard.prepend(controls);
 
+    }
+
+
+    /* UPDATE STUDENT COUNT */
+
+    const students =
+        Array.isArray(currentClassDashboard?.students)
+            ? currentClassDashboard.students
+            : [];
+
+    const count =
+        document.getElementById("teacherStudentCount");
+
+    if (count) {
+        count.textContent = students.length;
     }
 
 }
