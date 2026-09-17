@@ -5179,108 +5179,368 @@ async function loadClassDashboardAnnouncements(className) {
 function addClassWorkspaceControls() {
 
     const dashboard =
-        document.getElementById(
-            "classDashboard"
-        );
+        document.getElementById("classDashboard");
 
     if (!dashboard) return;
 
-
     let controls =
-        document.getElementById(
-            "classWorkspaceControls"
-        );
+        document.getElementById("classWorkspaceControls");
 
+    if (controls) {
+        controls.remove();
+    }
 
-    if (controls) return;
+    controls = document.createElement("div");
 
-
-    controls =
-        document.createElement("div");
-
-    controls.id =
-        "classWorkspaceControls";
-
-    controls.className =
-        "card";
-
+    controls.id = "classWorkspaceControls";
 
     controls.innerHTML = `
 
-        <h3>
-            👨‍🏫 Teacher Class Workspace
-        </h3>
+        <div class="teacher-workspace">
 
-        <p>
-            Manage everything for this class from here.
-        </p>
+            <div class="teacher-workspace-header">
 
-        <div style="
-            display:grid;
-            grid-template-columns:
-                repeat(auto-fit,minmax(180px,1fr));
-            gap:12px;
-            margin-top:15px;
-        ">
+                <div class="teacher-workspace-icon">
+                    👨‍🏫
+                </div>
 
-            <button
-                type="button"
-                class="primary-button"
-                onclick="addStudentToCurrentClass()"
-            >
-                ➕ Add Student
-            </button>
+                <div class="teacher-workspace-heading">
 
+                    <span class="teacher-workspace-label">
+                        TEACHER WORKSPACE
+                    </span>
 
+                    <h3>
+                        Manage Your Class
+                    </h3>
 
+                    <p>
+                        Everything you need to manage your assigned
+                        class is available here.
+                    </p>
 
+                </div>
 
+            </div>
 
 
+            <div class="teacher-workspace-actions">
 
-            <button
-                type="button"
-                class="primary-button"
-                onclick="openClassTimetable()"
-            >
-                📅 Class Timetable
-            </button>
+                <button
+                    type="button"
+                    class="teacher-action-card"
+                    onclick="addStudentToCurrentClass()"
+                >
+
+                    <span class="teacher-action-icon">
+                        ➕
+                    </span>
+
+                    <span class="teacher-action-content">
+
+                        <strong>
+                            Add Student
+                        </strong>
+
+                        <small>
+                            Register a new student in this class
+                        </small>
+
+                    </span>
+
+                    <span class="teacher-action-arrow">
+                        →
+                    </span>
+
+                </button>
 
 
-            <button
-                type="button"
-                class="primary-button"
-                onclick="openClassAnnouncements()"
-            >
-                📢 Class Announcements
-            </button>
+                <button
+                    type="button"
+                    class="teacher-action-card"
+                    onclick="openClassTimetable()"
+                >
+
+                    <span class="teacher-action-icon">
+                        📅
+                    </span>
+
+                    <span class="teacher-action-content">
+
+                        <strong>
+                            Class Timetable
+                        </strong>
+
+                        <small>
+                            View your class schedule and lessons
+                        </small>
+
+                    </span>
+
+                    <span class="teacher-action-arrow">
+                        →
+                    </span>
+
+                </button>
 
 
-            <button
-                type="button"
-                class="primary-button"
-                onclick="refreshClassDashboard()"
-            >
-                🔄 Refresh Class
-            </button>
+                <button
+                    type="button"
+                    class="teacher-action-card"
+                    onclick="openClassAnnouncements()"
+                >
+
+                    <span class="teacher-action-icon">
+                        📢
+                    </span>
+
+                    <span class="teacher-action-content">
+
+                        <strong>
+                            Class Announcements
+                        </strong>
+
+                        <small>
+                            View important class notices
+                        </small>
+
+                    </span>
+
+                    <span class="teacher-action-arrow">
+                        →
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="teacher-action-card"
+                    onclick="refreshClassDashboard()"
+                >
+
+                    <span class="teacher-action-icon">
+                        🔄
+                    </span>
+
+                    <span class="teacher-action-content">
+
+                        <strong>
+                            Refresh Dashboard
+                        </strong>
+
+                        <small>
+                            Reload the latest class information
+                        </small>
+
+                    </span>
+
+                    <span class="teacher-action-arrow">
+                        →
+                    </span>
+
+                </button>
+
+            </div>
 
         </div>
 
     `;
 
 
-    const info =
-        document.getElementById(
-            "classDashboardInfo"
-        );
+    const styleId =
+        "teacherWorkspaceProfessionalStyles";
 
-    if (info) {
+    if (!document.getElementById(styleId)) {
+
+        const style =
+            document.createElement("style");
+
+        style.id = styleId;
+
+        style.textContent = `
+
+            #classWorkspaceControls {
+                margin-top: 24px;
+                border: none;
+                background: transparent;
+                padding: 0;
+            }
+
+            .teacher-workspace {
+                background: #ffffff;
+                border: 1px solid #e5e7eb;
+                border-radius: 18px;
+                overflow: hidden;
+                box-shadow:
+                    0 8px 30px rgba(15, 23, 42, 0.08);
+            }
+
+            .teacher-workspace-header {
+                display: flex;
+                align-items: center;
+                gap: 18px;
+                padding: 24px;
+                background: linear-gradient(
+                    135deg,
+                    #f8fafc,
+                    #eef2ff
+                );
+                border-bottom: 1px solid #e5e7eb;
+            }
+
+            .teacher-workspace-icon {
+                width: 58px;
+                height: 58px;
+                min-width: 58px;
+                border-radius: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 28px;
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                box-shadow:
+                    0 4px 12px rgba(15, 23, 42, 0.08);
+            }
+
+            .teacher-workspace-label {
+                display: block;
+                font-size: 11px;
+                font-weight: 800;
+                letter-spacing: 1.4px;
+                color: #64748b;
+                margin-bottom: 4px;
+            }
+
+            .teacher-workspace-heading h3 {
+                margin: 0;
+                font-size: 22px;
+                color: #0f172a;
+            }
+
+            .teacher-workspace-heading p {
+                margin: 6px 0 0;
+                color: #64748b;
+                font-size: 14px;
+            }
+
+            .teacher-workspace-actions {
+                display: grid;
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+                gap: 14px;
+                padding: 20px;
+            }
+
+            .teacher-action-card {
+                width: 100%;
+                min-height: 96px;
+                border: 1px solid #e5e7eb;
+                border-radius: 14px;
+                background: #ffffff;
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                padding: 16px;
+                text-align: left;
+                cursor: pointer;
+                transition:
+                    transform 0.18s ease,
+                    box-shadow 0.18s ease,
+                    border-color 0.18s ease;
+            }
+
+            .teacher-action-card:hover {
+                transform: translateY(-2px);
+                border-color: #cbd5e1;
+                box-shadow:
+                    0 8px 22px rgba(15, 23, 42, 0.09);
+            }
+
+            .teacher-action-icon {
+                width: 46px;
+                height: 46px;
+                min-width: 46px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 22px;
+                background: #f1f5f9;
+            }
+
+            .teacher-action-content {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+                flex: 1;
+            }
+
+            .teacher-action-content strong {
+                color: #0f172a;
+                font-size: 15px;
+            }
+
+            .teacher-action-content small {
+                color: #64748b;
+                font-size: 12px;
+                line-height: 1.4;
+            }
+
+            .teacher-action-arrow {
+                font-size: 20px;
+                color: #94a3b8;
+                transition: transform 0.18s ease;
+            }
+
+            .teacher-action-card:hover
+            .teacher-action-arrow {
+                transform: translateX(3px);
+                color: #475569;
+            }
+
+            @media (max-width: 700px) {
+
+                .teacher-workspace-header {
+                    padding: 20px;
+                }
+
+                .teacher-workspace-actions {
+                    grid-template-columns: 1fr;
+                    padding: 14px;
+                }
+
+                .teacher-workspace-heading h3 {
+                    font-size: 19px;
+                }
+
+                .teacher-workspace-heading p {
+                    font-size: 13px;
+                }
+
+            }
+
+        `;
+
+        document.head.appendChild(style);
+    }
+
+
+    const info =
+        document.getElementById("classDashboardInfo");
+
+    if (info && info.parentElement) {
+
         info.parentElement.insertAdjacentElement(
             "afterend",
             controls
         );
+
     } else {
+
         dashboard.prepend(controls);
+
     }
 
 }
