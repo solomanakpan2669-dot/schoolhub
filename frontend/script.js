@@ -452,10 +452,22 @@ function escapeHTML(value) {
 
 async function getJSON(url, options = {}) {
 
+    const schoolToken =
+        localStorage.getItem("schoolToken");
+
+    const teacherToken =
+        localStorage.getItem("teacherToken");
+
+    const token =
+        schoolToken || teacherToken;
+
     const response = await fetch(url, {
         ...options,
         headers: {
             "Content-Type": "application/json",
+            ...(token
+                ? { "Authorization": "Bearer " + token }
+                : {}),
             ...(options.headers || {})
         }
     });

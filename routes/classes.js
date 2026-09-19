@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const db = require("../database/database");
+const { requireAuth } = require("../middleware/auth");
 
 const defaultClasses = [
     ["jss1", "Mr mavel", "Room 2"],
@@ -50,19 +51,29 @@ try {
    GET ALL CLASSES
 ========================================================= */
 
-router.get("/", (req, res) => {
+router.get("/", requireAuth, (req, res) => {
 
     try {
+
+        const schoolId = Number(req.schoolId);
+
+        if (!schoolId) {
+            return res.status(401).json({
+                error: "School login required"
+            });
+        }
 
         const classes = db.prepare(`
             SELECT
                 id,
                 name,
                 teacher,
-                room
+                room,
+                schoolId
             FROM classes
+            WHERE schoolId = ?
             ORDER BY id ASC
-        `).all();
+        `).all(schoolId);
 
         res.json(classes);
 
@@ -85,7 +96,7 @@ router.get("/", (req, res) => {
    GET ONE CLASS
 ========================================================= */
 
-router.get("/:id", (req, res) => {
+router.get("/:id", requireAuth, (req, res) => {
 
     try {
 
@@ -94,10 +105,12 @@ router.get("/:id", (req, res) => {
                 id,
                 name,
                 teacher,
-                room
+                room,
+                schoolId
             FROM classes
             WHERE id = ?
-        `).get(req.params.id);
+            AND schoolId = ?
+        `).get(req.params.id, Number(req.schoolId));
 
         if (!classItem) {
 
