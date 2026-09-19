@@ -5,10 +5,33 @@ const router = express.Router();
 
 // Get all classes
 router.get("/", (req, res) => {
-    const classes = db.prepare("SELECT * FROM classes").all();
+    const schoolId = Number(req.schoolId || 1);
+
+    const classes = db.prepare(`
+        SELECT *
+        FROM classes
+        WHERE schoolId = ?
+        ORDER BY id ASC
+    `).all(schoolId);
+
+    const getStudents = db.prepare(`
+        SELECT *
+        FROM students
+        WHERE schoolId = ?
+        AND LOWER(TRIM(className)) = LOWER(TRIM(?))
+        ORDER BY name ASC
+    `);
+
+    const classesWithStudents = classes.map(classItem => ({
+        ...classItem,
+        students: getStudents.all(
+            schoolId,
+            classItem.name
+        )
+    }));
 
     res.json({
-        classes: classes
+        classes: classesWithStudents
     });
 });
 

@@ -176,4 +176,205 @@ router.post("/login", (req, res) => {
     }
 });
 
+
+// ======================================================
+// TEACHER INVITATION
+// ======================================================
+
+const crypto = require("crypto");
+
+function generateInviteCode() {
+    let code;
+
+    do {
+        code = crypto
+            .randomBytes(6)
+            .toString("hex")
+            .toUpperCase();
+
+        const existing = db
+            .prepare(`
+                SELECT id
+                FROM teacher_invitations
+                WHERE code = ?
+            `)
+            .get(code);
+
+        if (!existing) {
+            return code;
+        }
+
+    } while (true);
+}
+
+router.post("/teacher-invite", (req, res) => {
+    try {
+        const schoolId = Number(
+            req.body?.schoolId
+        );
+
+        if (!schoolId) {
+            return res.status(400).json({
+                error: "School ID is required"
+            });
+        }
+
+        const school = db
+            .prepare(`
+                SELECT id, name, code
+                FROM schools
+                WHERE id = ?
+            `)
+            .get(schoolId);
+
+        if (!school) {
+            return res.status(404).json({
+                error: "School not found"
+            });
+        }
+
+        const code = generateInviteCode();
+
+        const createdAt =
+            new Date().toISOString();
+
+        const expiresAt =
+            new Date(
+                Date.now() +
+                7 * 24 * 60 * 60 * 1000
+            ).toISOString();
+
+        db.prepare(`
+            INSERT INTO teacher_invitations
+            (
+                schoolId,
+                code,
+                expiresAt,
+                used,
+                createdAt
+            )
+            VALUES (?, ?, ?, 0, ?)
+        `).run(
+            school.id,
+            code,
+            expiresAt,
+            createdAt
+        );
+
+        res.status(201).json({
+            message:
+                "Teacher invitation created",
+
+            inviteCode: code,
+
+            school: {
+                id: school.id,
+                name: school.name,
+                code: school.code
+            },
+
+            expiresAt,
+
+            invitePath:
+                `/teacher-register.html?invite=${encodeURIComponent(code)}`
+        });
+
+    } catch (error) {
+        console.error(
+            "TEACHER INVITE ERROR:",
+            error
+        );
+
+        res.status(500).json({
+            error:
+                "Failed to create teacher invitation",
+            details:
+                error.message
+        });
+    }
+});
+
+router.get(
+    "/teacher-invite/:code",
+    (req, res) => {
+        try {
+            const code = String(
+                req.params.code || ""
+            )
+                .trim()
+                .toUpperCase();
+
+            const invitation = db
+                .prepare(`
+                    SELECT
+                        ti.id,
+                        ti.code,
+                        ti.schoolId,
+                        ti.expiresAt,
+                        ti.used,
+                        s.name AS schoolName,
+                        s.code AS schoolCode
+                    FROM teacher_invitations ti
+                    JOIN schools s
+                        ON s.id = ti.schoolId
+                    WHERE ti.code = ?
+                `)
+                .get(code);
+
+            if (!invitation) {
+                return res.status(404).json({
+                    error:
+                        "Invalid teacher invitation"
+                });
+            }
+
+            if (invitation.used) {
+                return res.status(400).json({
+                    error:
+                        "This invitation has already been used"
+                });
+            }
+
+            if (
+                invitation.expiresAt &&
+                new Date(invitation.expiresAt)
+                    .getTime() < Date.now()
+            ) {
+                return res.status(400).json({
+                    error:
+                        "This invitation has expired"
+                });
+            }
+
+            res.json({
+                valid: true,
+                invitation: {
+                    code: invitation.code,
+                    schoolId: invitation.schoolId,
+                    schoolName:
+                        invitation.schoolName,
+                    schoolCode:
+                        invitation.schoolCode,
+                    expiresAt:
+                        invitation.expiresAt
+                }
+            });
+
+        } catch (error) {
+            console.error(
+                "CHECK TEACHER INVITE ERROR:",
+                error
+            );
+
+            res.status(500).json({
+                error:
+                    "Failed to check invitation",
+                details:
+                    error.message
+            });
+        }
+    }
+);
+
+
 module.exports = router;

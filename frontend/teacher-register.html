@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Registration</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 16px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        .password-box {
+            display: flex;
+            gap: 8px;
+        }
+
+        .password-box input {
+            flex: 1;
+        }
+
+        .password-box button {
+            margin-top: 6px;
+        }
+
+        #schoolStatus {
+            font-weight: bold;
+        }
+
+        #dashboardButton {
+            display: none;
+            background: green;
+            color: white;
+            border: none;
+            font-weight: bold;
+            padding: 12px 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Teacher Registration</h1>
+
+<p>
+    School:
+    <strong id="invitedSchool">Loading...</strong>
+</p>
+
+<label>School Name</label>
+<br>
+<input id="schoolName" type="text">
+<button type="button" onclick="verifySchool()">Verify School</button>
+
+<p id="schoolStatus"></p>
+
+<br>
+
+<label>Full Name</label>
+<br>
+<input id="name" type="text">
+
+<br><br>
+
+<label>Age</label>
+<br>
+<input id="age" type="number">
+
+<br><br>
+
+<label>Subject</label>
+<br>
+<input id="subject" type="text">
+
+<br><br>
+
+<label>Email</label>
+<br>
+<input id="email" type="email">
+
+<br><br>
+
+<label>Password</label>
+
+<div class="password-box">
+    <input id="password" type="password">
+    <button type="button" onclick="togglePassword()">
+        👁️ Show
+    </button>
+</div>
+
+<br>
+
+<label>Class</label>
+<br>
+<select id="classId">
+    <option value="">Loading classes...</option>
+</select>
+
+<br><br>
+
+<button type="button" onclick="registerTeacher()">
+    Register as Teacher
+</button>
+
+<p id="message"></p>
+
+<button
+    id="dashboardButton"
+    type="button"
+    onclick="openDashboard()"
+>
+    🚀 Open Dashboard
+</button>
+
+
+<script>
+
+const API_URL = "/api";
+
+const params = new URLSearchParams(
+    window.location.search
+);
+
+const inviteCode = params.get("invite");
+
+let school = null;
+
+
+/* ==============================
+   LOAD INVITATION
+============================== */
+
+async function loadInvitation() {
+
+    if (!inviteCode) {
+
+        showMessage(
+            "No invitation code. Please open the invitation link from your school.",
+            "red"
+        );
+
+        return;
+    }
+
+    try {
+
+        const response = await fetch(
+            API_URL +
+            "/schools/teacher-invite/" +
+            encodeURIComponent(inviteCode)
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !data.valid) {
+
+            throw new Error(
+                data.message ||
+                data.error ||
+                "This invitation is invalid or has already been used."
+            );
+        }
+
+        school = {
+            name: data.invitation.schoolName,
+            id: data.invitation.schoolId,
+            code: data.invitation.schoolCode
+        };
+
+        document.getElementById(
+            "invitedSchool"
+        ).textContent = school.name;
+
+        document.getElementById(
+            "schoolName"
+        ).value = school.name;
+
+    } catch (error) {
+
+        document.getElementById(
+            "invitedSchool"
+        ).textContent = "Invitation error";
+
+        showMessage(
+            error.message,
+            "red"
+        );
+    }
+}
+
+
+/* ==============================
+   LOAD CLASSES
+============================== */
+
+async function loadClasses() {
+
+    try {
+
+        const response =
+            await fetch(API_URL + "/classes");
+
+        const classes =
+            await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                classes.message ||
+                classes.error ||
+                "Could not load classes."
+            );
+        }
+
+        const select =
+            document.getElementById("classId");
+
+        select.innerHTML =
+            '<option value="">Select class</option>';
+
+        classes.forEach(function(cls) {
+
+            const option =
+                document.createElement("option");
+
+            option.value = cls.id;
+            option.textContent = cls.name;
+
+            select.appendChild(option);
+        });
+
+    } catch (error) {
+
+        showMessage(
+            "Could not load classes: " +
+            error.message,
+            "red"
+        );
+    }
+}
+
+
+/* ==============================
+   VERIFY SCHOOL
+============================== */
+
+function verifySchool() {
+
+    if (!school) {
+
+        showMessage(
+            "School information has not loaded yet.",
+            "red"
+        );
+
+        return;
+    }
+
+    const entered =
+        document.getElementById(
+            "schoolName"
+        ).value.trim();
+
+    const status =
+        document.getElementById(
+            "schoolStatus"
+        );
+
+    if (
+        entered.toLowerCase() ===
+        school.name.toLowerCase()
+    ) {
+
+        status.textContent =
+            "School verified ✓";
+
+        status.style.color = "green";
+
+    } else {
+
+        status.textContent =
+            "School name does not match.";
+
+        status.style.color = "red";
+    }
+}
+
+
+/* ==============================
+   SHOW / HIDE PASSWORD
+============================== */
+
+function togglePassword() {
+
+    const password =
+        document.getElementById("password");
+
+    const button =
+        document.querySelector(
+            ".password-box button"
+        );
+
+    if (password.type === "password") {
+
+        password.type = "text";
+        button.textContent = "🙈 Hide";
+
+    } else {
+
+        password.type = "password";
+        button.textContent = "👁️ Show";
+    }
+}
+
+
+/* ==============================
+   REGISTER TEACHER
+============================== */
+
+async function registerTeacher() {
+
+    if (!school) {
+
+        showMessage(
+            "Please open a valid teacher invitation link.",
+            "red"
+        );
+
+        return;
+    }
+
+    const schoolName =
+        document.getElementById(
+            "schoolName"
+        ).value.trim();
+
+    const name =
+        document.getElementById(
+            "name"
+        ).value.trim();
+
+    const age =
+        Number(
+            document.getElementById(
+                "age"
+            ).value
+        );
+
+    const subject =
+        document.getElementById(
+            "subject"
+        ).value.trim();
+
+    const email =
+        document.getElementById(
+            "email"
+        ).value.trim();
+
+    const password =
+        document.getElementById(
+            "password"
+        ).value;
+
+    const assignedClassId =
+        Number(
+            document.getElementById(
+                "classId"
+            ).value
+        );
+
+
+    if (
+        !schoolName ||
+        !name ||
+        !age ||
+        !subject ||
+        !email ||
+        !password ||
+        !assignedClassId
+    ) {
+
+        showMessage(
+            "Please fill in all fields.",
+            "red"
+        );
+
+        return;
+    }
+
+
+    if (
+        schoolName.toLowerCase() !==
+        school.name.toLowerCase()
+    ) {
+
+        showMessage(
+            "Please enter the correct school name.",
+            "red"
+        );
+
+        return;
+    }
+
+
+    try {
+
+        showMessage(
+            "Registering teacher...",
+            "black"
+        );
+
+        const response = await fetch(
+            API_URL + "/teachers/register",
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    inviteCode:
+                        inviteCode,
+
+                    schoolName:
+                        schoolName,
+
+                    name:
+                        name,
+
+                    age:
+                        age,
+
+                    subject:
+                        subject,
+
+                    email:
+                        email,
+
+                    password:
+                        password,
+
+                    assignedClassId:
+                        assignedClassId
+                })
+            }
+        );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.message ||
+                data.error ||
+                "Registration failed."
+            );
+        }
+
+
+        /* SAVE TEACHER LOGIN */
+
+        localStorage.setItem(
+            "teacherToken",
+            data.token
+        );
+
+        localStorage.setItem(
+            "teacher",
+            JSON.stringify(
+                data.teacher
+            )
+        );
+
+
+        /* SUCCESS MESSAGE */
+
+        showMessage(
+            "✅ TEACHER REGISTRATION SUCCESSFUL!",
+            "green"
+        );
+
+
+        /* SHOW DASHBOARD BUTTON */
+
+        document.getElementById(
+            "dashboardButton"
+        ).style.display = "inline-block";
+
+
+        /* DISABLE REGISTER BUTTON */
+
+        const registerButton =
+            document.querySelector(
+                'button[onclick="registerTeacher()"]'
+            );
+
+        if (registerButton) {
+
+            registerButton.disabled = true;
+            registerButton.textContent =
+                "✅ Registration Complete";
+        }
+
+
+    } catch (error) {
+
+        showMessage(
+            error.message,
+            "red"
+        );
+    }
+}
+
+
+/* ==============================
+   OPEN TEACHER DASHBOARD
+============================== */
+
+function openDashboard() {
+
+    window.location.href = "/";
+}
+
+
+/* ==============================
+   MESSAGE
+============================== */
+
+function showMessage(text, color) {
+
+    const box =
+        document.getElementById("message");
+
+    box.textContent = text;
+    box.style.color = color;
+    box.style.fontWeight = "bold";
+}
+
+
+/* ==============================
+   START
+============================== */
+
+loadInvitation();
+loadClasses();
+
+</script>
+
+</body>
+</html>

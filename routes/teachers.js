@@ -156,11 +156,35 @@ router.post("/login", (req, res) => {
             });
         }
 
-        const passwordCorrect =
-            verifyPassword(
+        console.log("LOGIN DEBUG:", {
+            email,
+            passwordLength: password.length,
+            storedPrefix: String(teacher.password).substring(0, 7),
+            passwordCorrect: verifyPassword(
                 password,
                 teacher.password
-            );
+            )
+        });
+
+        let passwordCorrect = false;
+
+        if (String(teacher.password).startsWith("scrypt:")) {
+            const parts = String(teacher.password).split(":");
+
+            if (parts.length === 3) {
+                const salt = parts[1];
+                const storedHash = parts[2];
+
+                const hash = crypto
+                    .scryptSync(password, salt, 64)
+                    .toString("hex");
+
+                passwordCorrect = hash === storedHash;
+            }
+        } else {
+            passwordCorrect =
+                teacher.password === password;
+        }
 
         if (!passwordCorrect) {
             return res.status(401).json({
@@ -302,6 +326,311 @@ router.get("/:id", (req, res) => {
             message:
                 "Failed to load teacher",
             error:
+                error.message
+        });
+    }
+});
+
+
+/* =========================================================
+   TEACHER INVITE REGISTRATION
+========================================================= */
+
+router.post("/register", (req, res) => {
+    try {
+        const body = req.body || {};
+
+        const inviteCode =
+            String(body.inviteCode || "")
+                .trim()
+                .toUpperCase();
+
+        const name =
+            String(body.name || "").trim();
+
+        const age =
+            Number(body.age);
+
+        const subject =
+            String(body.subject || "").trim();
+
+        const email =
+            String(body.email || "")
+                .trim()
+                .toLowerCase();
+
+        const password =
+            String(body.password || "");
+
+        const assignedClassId =
+            body.assignedClassId
+                ? Number(body.assignedClassId)
+                : null;
+
+        // --------------------------------------------------
+        // BASIC VALIDATION
+        // --------------------------------------------------
+
+        if (
+            !inviteCode ||
+            !name ||
+            !Number.isFinite(age) ||
+            !subject ||
+            !email ||
+            !password
+        ) {
+            return res.status(400).json({
+                error:
+                    "Invitation, name, age, subject, email and password are required"
+            });
+        }
+
+        if (password.length < 6) {
+            return res.status(400).json({
+                error:
+                    "Password must be at least 6 characters"
+            });
+        }
+
+        // --------------------------------------------------
+        // FIND INVITATION
+        // --------------------------------------------------
+
+        const invitation =
+            db.prepare(`
+                SELECT
+                    id,
+                    schoolId,
+                    code,
+                    expiresAt,
+                    used
+                FROM teacher_invitations
+                WHERE code = ?
+            `).get(inviteCode);
+
+        if (!invitation) {
+            return res.status(404).json({
+                error:
+                    "Invalid teacher invitation"
+            });
+        }
+
+        if (invitation.used) {
+            return res.status(400).json({
+                error:
+                    "This teacher invitation has already been used"
+            });
+        }
+
+        if (
+            invitation.expiresAt &&
+            new Date(invitation.expiresAt)
+                .getTime() < Date.now()
+        ) {
+            return res.status(400).json({
+                error:
+                    "This teacher invitation has expired"
+            });
+        }
+
+        const schoolId =
+            invitation.schoolId;
+
+        // --------------------------------------------------
+        // CHECK EMAIL
+        // --------------------------------------------------
+
+        const existingTeacher =
+            db.prepare(`
+                SELECT id
+                FROM teachers
+                WHERE schoolId = ?
+                AND LOWER(email) = ?
+            `).get(
+                schoolId,
+                email
+            );
+
+        if (existingTeacher) {
+            return res.status(409).json({
+                error:
+                    "A teacher with this email already exists in this school"
+            });
+        }
+
+        // --------------------------------------------------
+        // CHECK CLASS
+        // --------------------------------------------------
+
+        if (!assignedClassId) {
+            return res.status(400).json({
+                error:
+                    "Please select a class"
+            });
+        }
+
+        const classItem =
+            db.prepare(`
+                SELECT
+                    id,
+                    name,
+                    schoolId
+                FROM classes
+                WHERE id = ?
+                AND schoolId = ?
+            `).get(
+                assignedClassId,
+                schoolId
+            );
+
+        if (!classItem) {
+            return res.status(400).json({
+                error:
+                    "Selected class does not belong to this school"
+            });
+        }
+
+        // --------------------------------------------------
+        // CHECK WHETHER CLASS ALREADY HAS TEACHER
+        // --------------------------------------------------
+
+        const classTeacher =
+            db.prepare(`
+                SELECT
+                    id,
+                    name
+                FROM teachers
+                WHERE schoolId = ?
+                AND assignedClassId = ?
+            `).get(
+                schoolId,
+                assignedClassId
+            );
+
+        if (classTeacher) {
+            return res.status(409).json({
+                error:
+                    `This class is already assigned to ${classTeacher.name}`
+            });
+        }
+
+        // --------------------------------------------------
+        // CREATE TEACHER
+        // --------------------------------------------------
+
+        const storedPassword =
+            hashPassword(password);
+
+        const result =
+            db.prepare(`
+                INSERT INTO teachers
+                (
+                    name,
+                    age,
+                    subject,
+                    email,
+                    password,
+                    schoolId,
+                    assignedClassId
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            `).run(
+                name,
+                age,
+                subject,
+                email,
+                storedPassword,
+                schoolId,
+                assignedClassId
+            );
+
+        // --------------------------------------------------
+        // MARK INVITATION AS USED
+        // --------------------------------------------------
+
+        db.prepare(`
+            UPDATE teacher_invitations
+            SET used = 1
+            WHERE id = ?
+        `).run(
+            invitation.id
+        );
+
+        // --------------------------------------------------
+        // UPDATE CLASS TEACHER NAME
+        // --------------------------------------------------
+
+        db.prepare(`
+            UPDATE classes
+            SET teacher = ?
+            WHERE id = ?
+            AND schoolId = ?
+        `).run(
+            name,
+            assignedClassId,
+            schoolId
+        );
+
+        // --------------------------------------------------
+        // GET CREATED TEACHER
+        // --------------------------------------------------
+
+        const teacher =
+            db.prepare(`
+                SELECT
+                    id,
+                    name,
+                    age,
+                    subject,
+                    email,
+                    photo,
+                    schoolId,
+                    assignedClassId
+                FROM teachers
+                WHERE id = ?
+                AND schoolId = ?
+            `).get(
+                result.lastInsertRowid,
+                schoolId
+            );
+
+        // --------------------------------------------------
+        // LOGIN TOKEN
+        // --------------------------------------------------
+
+        const token =
+            createToken(
+                schoolId,
+                {
+                    role: "teacher",
+                    teacherId: teacher.id
+                }
+            );
+
+        res.status(201).json({
+            message:
+                "Teacher registered successfully",
+
+            token,
+
+            teacher:
+                buildTeacherResult(
+                    teacher
+                )
+        });
+
+    } catch (error) {
+
+        console.error(
+            "TEACHER REGISTRATION ERROR:",
+            error
+        );
+
+        res.status(500).json({
+            error:
+                "Failed to register teacher",
+
+            details:
                 error.message
         });
     }

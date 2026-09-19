@@ -1,6 +1,7 @@
 const Database = require("better-sqlite3");
 
-const db = new Database("database/school.db");
+const path = require("path");
+const db = new Database(path.join(__dirname, "school.db"));
 
 db.pragma("journal_mode = WAL");
 
@@ -127,11 +128,43 @@ db.prepare(`
 `).run();
 
 
+
+// ======================================================
+// TEACHER INVITATIONS
+// ======================================================
+
+db.prepare(`
+    CREATE TABLE IF NOT EXISTS teacher_invitations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        schoolId INTEGER NOT NULL,
+        code TEXT NOT NULL UNIQUE,
+        expiresAt TEXT,
+        used INTEGER NOT NULL DEFAULT 0,
+        createdAt TEXT NOT NULL
+    )
+`).run();
+
 console.log("======================================");
 console.log("SchoolConnect database ready!");
 console.log("Existing data has been preserved.");
 console.log("Teacher class assignment is enabled.");
 console.log("Students, teachers and classes are persistent.");
+
+// ======================================================
+// TEACHER INVITATIONS
+// ======================================================
+
+db.prepare(`
+    CREATE TABLE IF NOT EXISTS teacher_invitations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        schoolId INTEGER NOT NULL,
+        code TEXT NOT NULL UNIQUE,
+        expiresAt TEXT,
+        used INTEGER NOT NULL DEFAULT 0,
+        createdAt TEXT NOT NULL
+    )
+`).run();
+
 console.log("======================================");
 
 

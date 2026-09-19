@@ -5,7 +5,14 @@ const router = express.Router();
 
 // Get all students
 router.get("/", (req, res) => {
-    const students = db.prepare("SELECT * FROM students").all();
+    const schoolId = Number(req.schoolId || 1);
+
+    const students = db.prepare(`
+        SELECT *
+        FROM students
+        WHERE schoolId = ?
+        ORDER BY id DESC
+    `).all(schoolId);
 
     res.json({
         students: students
@@ -31,10 +38,12 @@ router.get("/:id", (req, res) => {
 router.post("/", (req, res) => {
     const { name, age, className } = req.body;
 
+    const schoolId = Number(req.schoolId || 1);
+
     const result = db.prepare(`
-        INSERT INTO students (name, age, className)
-        VALUES (?, ?, ?)
-    `).run(name, age, className);
+        INSERT INTO students (name, age, className, schoolId)
+        VALUES (?, ?, ?, ?)
+    `).run(name, age, className, schoolId);
 
     const newStudent = db.prepare(`
         SELECT * FROM students WHERE id = ?

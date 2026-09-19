@@ -8,6 +8,113 @@
 
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="data:,">
+
+<style>
+.school-name-display {
+    font-size: 32px;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 8px;
+}
+
+.school-main-header {
+    background: linear-gradient(135deg, #2563eb, #7c3aed, #db2777);
+    color: white;
+    padding: 28px 35px;
+    border-radius: 0 0 25px 25px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.18);
+}
+
+.school-main-header h1 {
+    font-size: 42px;
+    margin: 0;
+}
+</style>
+
+
+<style>
+#loginScreen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    box-sizing: border-box;
+}
+
+#loginScreen .login-card {
+    width: 100%;
+    max-width: 460px;
+    padding: 35px;
+    box-sizing: border-box;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 15px 45px rgba(0,0,0,0.15);
+}
+
+#loginScreen .login-card h1 {
+    text-align: center;
+    margin: 10px 0 5px;
+}
+
+#loginScreen .login-subtitle {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+#loginScreen label {
+    display: block;
+    margin-top: 15px;
+    margin-bottom: 7px;
+    font-weight: 600;
+}
+
+#loginScreen input {
+    width: 100%;
+    padding: 13px;
+    box-sizing: border-box;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    font-size: 16px;
+}
+
+#loginScreen button {
+    cursor: pointer;
+}
+
+#loginScreen .login-submit-button {
+    width: 100%;
+    margin-top: 20px;
+}
+
+#loginScreen .login-type-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+#loginScreen .login-type-button {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+}
+
+#schoolRegistrationArea {
+    text-align: center;
+}
+
+#showSchoolRegisterButton {
+    width: 100%;
+    margin-top: 15px;
+    padding: 12px;
+}
+
+#loginScreen .login-help {
+    text-align: center;
+    margin-top: 20px;
+}
+</style>
+
 </head>
 
 <body>
@@ -135,6 +242,82 @@
         </form>
 
 
+        <!-- SCHOOL REGISTRATION -->
+
+        <div id="schoolRegistrationArea" style="margin-top:20px;">
+
+            <button
+                type="button"
+                id="showSchoolRegisterButton"
+                class="secondary-button"
+                onclick="showSchoolRegistration()">
+                📝 Create School Account
+            </button>
+
+        </div>
+
+        <form
+            id="schoolRegistrationForm"
+            style="display:none; margin-top:20px;"
+        >
+
+            <h2>🏫 Create School Account</h2>
+
+            <label for="schoolRegisterName">
+                School Name
+            </label>
+
+            <input
+                type="text"
+                id="schoolRegisterName"
+                placeholder="Enter your school name"
+                required
+            >
+
+            <label for="schoolRegisterPassword">
+                Password
+            </label>
+
+            <div style="display:flex; gap:8px;">
+
+                <input
+                    type="password"
+                    id="schoolRegisterPassword"
+                    placeholder="Create a password"
+                    minlength="6"
+                    required
+                    style="flex:1;"
+                >
+
+                <button
+                    type="button"
+                    onclick="toggleSchoolRegisterPassword()">
+                    👁️
+                </button>
+
+            </div>
+
+            <button
+                type="submit"
+                class="primary-button"
+                style="margin-top:15px;">
+                🏫 Register School
+            </button>
+
+            <button
+                type="button"
+                onclick="hideSchoolRegistration()"
+                style="margin-left:8px;">
+                Back to Login
+            </button>
+
+        </form>
+
+        <div
+            id="schoolRegistrationResult"
+            style="display:none; margin-top:20px;">
+        </div>
+
         <!-- LOGIN MESSAGE -->
 
         <div
@@ -161,7 +344,7 @@
     style="display:none;"
 >
 
-    <header class="topbar">
+    <header class="topbar school-main-header">
 
         <div>
             <h1>👨‍🏫 Teacher Dashboard</h1>
@@ -318,12 +501,17 @@
 
 <section
     id="schoolDashboard"
+    style="display:none;"
 >
 
 <header class="topbar">
 
     <div>
-        <h1>🏫 School Management System</h1>
+        <div id="schoolNameDisplay" class="school-name-display">
+    🏫 Your School
+</div>
+
+<h1>School Management System</h1>
 
         <p id="schoolWelcome">
             Manage students, teachers and classes
@@ -419,7 +607,50 @@
          STUDENTS
     ========================== -->
 
-    <section id="students" class="section active">
+    
+<!-- =====================================================
+     TEACHER INVITATIONS
+     HEADMASTER DASHBOARD ONLY
+====================================================== -->
+
+<section
+    id="teacherInviteSection"
+    style="margin-top:25px;"
+>
+
+    <div class="section-header">
+
+        <div>
+            <h2>👨‍🏫 Teacher Invitations</h2>
+
+            <p>
+                Create a private invitation link for a teacher
+                to join your school.
+            </p>
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <button
+            type="button"
+            class="primary-button"
+            onclick="createTeacherInvitation()"
+        >
+            🔗 Generate Teacher Invitation
+        </button>
+
+        <div
+            id="teacherInviteResult"
+            style="margin-top:20px;"
+        ></div>
+
+    </div>
+
+</section>
+
+<section id="students" class="section active">
 
         <div class="section-header">
 
@@ -562,11 +793,32 @@
 
     <section id="classes" class="section">
 
-        <div class="section-header">
+        <div style="
+            display:flex;
+            align-items:center;
+            gap:15px;
+            margin-bottom:20px;
+        ">
+
+            <button
+                type="button"
+                class="secondary-button"
+                onclick="showSection('students')">
+                ← Back to Dashboard
+            </button>
 
             <div>
                 <h2>Classes</h2>
                 <p>Add, search and manage classes</p>
+            </div>
+
+        </div>
+
+        <div class="section-header">
+
+            <div>
+                <h2>Classes</h2>
+                <p>Manage your school classes</p>
             </div>
 
 
@@ -858,6 +1110,234 @@
             💡 Click any empty timetable cell to add a subject.
             Click an existing subject to edit it.
         </p>
+
+    </div>
+
+</section>
+
+
+
+<!-- =====================================================
+     DAILY REGISTER
+====================================================== -->
+
+<section
+    id="attendance"
+    class="section"
+    style="display:none;"
+>
+
+    <div class="section-header">
+
+        <div>
+
+            <button
+                type="button"
+                class="secondary-button"
+                onclick="openClassDashboard(currentClassDashboardId)"
+            >
+                ← Back to Class Dashboard
+            </button>
+
+            <h2 id="attendanceTitle">
+                📋 Daily Register
+            </h2>
+
+            <p id="attendanceClassInfo">
+                Mark attendance for this class.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div style="
+        margin:20px 0;
+        padding:20px;
+        background:#f8fafc;
+        border-radius:12px;
+        border:1px solid #e2e8f0;
+    ">
+
+        <label>
+            <strong>Date:</strong>
+        </label>
+
+        <input
+            type="date"
+            id="newAttendanceDate"
+            style="
+                padding:10px;
+                margin-left:10px;
+                border:1px solid #ccc;
+                border-radius:8px;
+            "
+        >
+
+        <button
+            type="button"
+            class="primary-button"
+            id="loadAttendanceButton"
+            style="margin-left:10px;"
+        >
+            Load Attendance
+        </button>
+
+    </div>
+
+
+    <div id="newAttendanceMessage"></div>
+
+
+    <div style="
+        overflow-x:auto;
+        max-height:500px;
+        overflow-y:auto;
+    ">
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>Student</th>
+                    <th>Class</th>
+                    <th>Status</th>
+                </tr>
+
+            </thead>
+
+            <tbody id="newAttendanceTable">
+
+                <tr>
+                    <td colspan="3">
+                        Loading students...
+                    </td>
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <div style="margin-top:20px;">
+
+        <button
+            type="button"
+            class="primary-button"
+            id="saveAttendanceButton"
+        >
+            💾 Save Attendance
+        </button>
+
+    </div>
+
+</section>
+
+
+
+<!-- =====================================================
+     ATTENDANCE HISTORY
+====================================================== -->
+
+<section
+    id="monthlyAttendance"
+    class="section"
+    style="display:none;"
+>
+
+    <div class="section-header">
+
+        <div>
+
+            <button
+                type="button"
+                class="secondary-button"
+                onclick="openClassDashboard(currentClassDashboardId)"
+            >
+                ← Back to Class Dashboard
+            </button>
+
+            <h2 id="monthlyAttendanceTitle">
+                📊 Attendance History
+            </h2>
+
+            <p id="monthlyAttendanceClassInfo">
+                View attendance summary for this class.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div style="
+        margin:20px 0;
+        padding:20px;
+        background:#f8fafc;
+        border-radius:12px;
+        border:1px solid #e2e8f0;
+    ">
+
+        <label>
+            <strong>Month:</strong>
+        </label>
+
+        <input
+            type="month"
+            id="monthlyAttendanceMonth"
+            style="
+                padding:10px;
+                margin-left:10px;
+                border:1px solid #ccc;
+                border-radius:8px;
+            "
+        >
+
+        <button
+            type="button"
+            class="primary-button"
+            id="loadMonthlyAttendanceButton"
+            style="margin-left:10px;"
+        >
+            Load Report
+        </button>
+
+    </div>
+
+
+    <div style="overflow-x:auto;">
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>Student</th>
+                    <th>Class</th>
+                    <th>Present</th>
+                    <th>Absent</th>
+                    <th>Late</th>
+                    <th>Total</th>
+                    <th>Percentage</th>
+                </tr>
+
+            </thead>
+
+            <tbody id="monthlyAttendanceTable">
+
+                <tr>
+                    <td colspan="7">
+                        Select a month.
+                    </td>
+                </tr>
+
+            </tbody>
+
+        </table>
 
     </div>
 
@@ -1537,6 +2017,8 @@
 <!-- JAVASCRIPT -->
 
 <script src="script.js"></script>
+
+
 
 </body>
 </html>

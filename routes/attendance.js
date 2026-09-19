@@ -94,17 +94,21 @@ function teacherOwnsStudent(
     }
 
     const student = db.prepare(`
-        SELECT id
+        SELECT
+            students.id
         FROM students
-        WHERE id = ?
-        AND schoolId = ?
-        AND LOWER(TRIM(className)) =
-            LOWER(TRIM(?))
+        INNER JOIN classes
+            ON LOWER(TRIM(classes.name)) =
+               LOWER(TRIM(students.className))
+            AND classes.schoolId = students.schoolId
+        WHERE students.id = ?
+        AND students.schoolId = ?
+        AND classes.id = ?
         LIMIT 1
     `).get(
         studentId,
         schoolId,
-        teacher.className
+        teacher.classId
     );
 
     return !!student;
@@ -644,17 +648,20 @@ router.post(
 
                                 const belongsToClass =
                                     teacher &&
-                                    teacher.className &&
-                                    String(
+                                    teacher.classId &&
+                                    db.prepare(`
+                                        SELECT 1
+                                        FROM classes
+                                        WHERE id = ?
+                                        AND schoolId = ?
+                                        AND LOWER(TRIM(name)) =
+                                            LOWER(TRIM(?))
+                                        LIMIT 1
+                                    `).get(
+                                        teacher.classId,
+                                        req.schoolId,
                                         student.className
-                                    )
-                                    .trim()
-                                    .toLowerCase() ===
-                                    String(
-                                        teacher.className
-                                    )
-                                    .trim()
-                                    .toLowerCase();
+                                    );
 
                                 if (
                                     !belongsToClass

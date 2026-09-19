@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Login</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .login-box {
+            width: 100%;
+            max-width: 420px;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,.1);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-top: 18px;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+            margin-top: 25px;
+            border: none;
+            border-radius: 8px;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #message {
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="login-box">
+
+    <h1>Teacher Login</h1>
+
+    <label>Email</label>
+    <input
+        id="email"
+        type="email"
+        placeholder="Enter your email"
+    >
+
+    <label>Password</label>
+
+    <div style="display:flex; gap:8px;">
+        <input
+            id="password"
+            type="password"
+            placeholder="Enter your password"
+            style="flex:1;"
+        >
+
+        <button
+            type="button"
+            id="togglePasswordButton"
+            onclick="togglePassword()"
+            style="width:auto; margin-top:0; padding:0 15px;"
+        >
+            Show
+        </button>
+    </div>
+
+    <button onclick="loginTeacher()">
+        Login
+    </button>
+
+    <p id="message"></p>
+
+</div>
+
+<script>
+
+function togglePassword() {
+    const password = document.getElementById("password");
+    const button = document.getElementById("togglePasswordButton");
+
+    if (password.type === "password") {
+        password.type = "text";
+        button.textContent = "Hide";
+    } else {
+        password.type = "password";
+        button.textContent = "Show";
+    }
+}
+
+async function loginTeacher() {
+
+    const email =
+        document.getElementById("email").value.trim();
+
+    const password =
+        document.getElementById("password").value;
+
+    const message =
+        document.getElementById("message");
+
+    if (!email || !password) {
+        message.textContent =
+            "Please enter your email and password.";
+        message.style.color = "red";
+        return;
+    }
+
+    try {
+
+        const response = await fetch(
+            "/api/teachers/login",
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body: JSON.stringify({
+                    email,
+                    password
+                })
+            }
+        );
+
+        const data =
+            await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.message ||
+                data.error ||
+                "Login failed."
+            );
+        }
+
+        localStorage.setItem(
+            "teacherToken",
+            data.token
+        );
+
+        localStorage.setItem(
+            "teacher",
+            JSON.stringify(data.teacher)
+        );
+
+        message.textContent =
+            "Login successful!";
+
+        message.style.color = "green";
+
+        setTimeout(function() {
+
+            const teacher =
+                data.teacher;
+
+            if (teacher && teacher.assignedClassId) {
+
+                window.location.href =
+                    "/?teacher=1&classId=" +
+                    encodeURIComponent(
+                        teacher.assignedClassId
+                    );
+
+            } else {
+
+                window.location.href = "/";
+            }
+
+        }, 800);
+
+    } catch (error) {
+
+        message.textContent =
+            error.message;
+
+        message.style.color = "red";
+    }
+}
+
+</script>
+
+</body>
+</html>

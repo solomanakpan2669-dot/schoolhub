@@ -20,6 +20,16 @@ app.use(express.json({ limit: "4mb" }));
 
 app.use("/api/schools", schoolsRouter);
 
+// Teacher registration page
+app.get("/teacher-register.html", (req, res) => {
+
+    res.sendFile(
+        path.join(__dirname, "../frontend/teacher-register.html")
+    );
+});
+
+
+
 // ======================================================
 // SCHOOL DATA ROUTES
 // ======================================================
